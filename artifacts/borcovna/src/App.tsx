@@ -27,10 +27,10 @@ const sections = [
 ];
 
 const photos = {
-  kuchyne: [furn2],
-  skrine: [furn5, furn6],
-  chodby: [furn1, furn7],
-  komody: [furn3, furn4],
+  kuchyne: [furn2, furn5, furn6, furn3, furn4],
+  skrine: [furn5, furn6, furn1, furn7, furn2],
+  chodby: [furn1, furn7, furn3, furn4, furn5],
+  komody: [furn3, furn4, furn2, furn6, furn7],
 };
 
 function Home() {
