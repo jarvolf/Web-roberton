@@ -27,10 +27,10 @@ const sections = [
 ];
 
 const photos = {
-  kuchyne: [furn1, furn2],
-  skrine: [furn3, furn4, furn5],
-  chodby: [],
-  komody: [furn6, furn7],
+  kuchyne: [furn2],
+  skrine: [furn5, furn6],
+  chodby: [furn1, furn7],
+  komody: [furn3, furn4],
 };
 
 function Home() {
@@ -59,8 +59,8 @@ function Home() {
         </div>
       </header>
 
-      {/* Navigation */}
-      <nav className="w-full max-w-3xl px-6 mb-16 flex justify-center gap-8 md:gap-16">
+      {/* Navigation – sticky */}
+      <nav className="sticky top-0 z-50 w-full px-6 py-4 flex justify-center gap-8 md:gap-16 bg-background/90 backdrop-blur-sm border-b border-border/30">
         {sections.map((section) => {
           const isActive = activeSection === section.id;
           const Icon = section.icon;
@@ -68,7 +68,8 @@ function Home() {
             <button
               key={section.id}
               onClick={() => setActiveSection(section.id)}
-              className={`flex flex-col items-center gap-3 transition-colors duration-300 ${
+              data-testid={`nav-${section.id}`}
+              className={`flex flex-col items-center gap-2 transition-colors duration-300 ${
                 isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -82,7 +83,7 @@ function Home() {
                   />
                 )}
               </div>
-              <span className={`text-xs uppercase tracking-widest font-semibold transition-opacity duration-300 ${isActive ? "opacity-100" : "opacity-0"}`}>
+              <span className={`text-xs uppercase tracking-widest font-semibold transition-opacity duration-300 ${isActive ? "opacity-100" : "opacity-0 h-0 overflow-hidden"}`}>
                 {section.label}
               </span>
             </button>
@@ -91,7 +92,7 @@ function Home() {
       </nav>
 
       {/* Gallery */}
-      <main className="w-full max-w-6xl px-6 pb-24 flex-grow flex flex-col items-center">
+      <main className="w-full max-w-6xl px-6 pt-10 pb-24 flex-grow flex flex-col items-center">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeSection}
