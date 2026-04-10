@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Borcovna – Montáže nábytku"
+version = "1.0.0"
+id = "artifacts/borcovna"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21038
+
+[services.development]
+run = "pnpm --filter @workspace/borcovna run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/borcovna", "run", "build" ]
+publicDir = "artifacts/borcovna/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21038"
+BASE_PATH = "/"
