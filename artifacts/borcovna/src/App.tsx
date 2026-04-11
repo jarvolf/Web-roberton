@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import { motion, AnimatePresence } from "framer-motion";
-import { CookingPot, SquareSplitHorizontal, DoorOpen, Archive } from "lucide-react";
+import { CookingPot, DoorOpen, Baby, Package, Droplets } from "lucide-react";
 
 import logoGroup from "@assets/IMG-20260410-WA0002_1775846111566.jpg";
 import logoSingle from "@assets/IMG-20260410-WA0001_1775846111605.jpg";
@@ -20,17 +20,19 @@ import furn7 from "@assets/IMG-20251015-WA0000_1775846111696.jpg";
 const queryClient = new QueryClient();
 
 const sections = [
-  { id: "kuchyne", label: "Kuchyňské linky", icon: CookingPot },
-  { id: "skrine", label: "Vestavné skříně", icon: SquareSplitHorizontal },
-  { id: "chodby", label: "Chodby & Předsíně", icon: DoorOpen },
-  { id: "komody", label: "Komody & Úložiště", icon: Archive },
+  { id: "kuchyne", label: "Kuchyně", icon: CookingPot },
+  { id: "predsine", label: "Předsíně", icon: DoorOpen },
+  { id: "detske", label: "Dětské pokoje", icon: Baby },
+  { id: "skrine", label: "Skříně", icon: Package },
+  { id: "koupelny", label: "Koupelny", icon: Droplets },
 ];
 
 const photos = {
   kuchyne: [furn2, furn5, furn6, furn3, furn4],
+  predsine: [furn1, furn7, furn4, furn2, furn6],
+  detske: [furn3, furn6, furn1, furn5, furn7],
   skrine: [furn5, furn6, furn1, furn7, furn2],
-  chodby: [furn1, furn7, furn3, furn4, furn5],
-  komody: [furn3, furn4, furn2, furn6, furn7],
+  koupelny: [furn4, furn3, furn7, furn6, furn1],
 };
 
 function Home() {
@@ -125,12 +127,21 @@ function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="w-full py-12 flex justify-center border-t border-border/50">
-        <a 
-          href="mailto:borcovna@roberton.cz" 
+      <footer className="w-full py-12 flex flex-col sm:flex-row justify-center items-center gap-6 sm:gap-12 border-t border-border/50">
+        <a
+          href="mailto:borcovna@roberton.cz"
+          data-testid="link-email"
           className="text-muted-foreground hover:text-primary transition-colors tracking-widest text-sm"
         >
           borcovna@roberton.cz
+        </a>
+        <span className="hidden sm:block text-border/60">|</span>
+        <a
+          href="tel:+420606836630"
+          data-testid="link-phone"
+          className="text-muted-foreground hover:text-primary transition-colors tracking-widest text-sm"
+        >
+          606 836 630
         </a>
       </footer>
     </div>
