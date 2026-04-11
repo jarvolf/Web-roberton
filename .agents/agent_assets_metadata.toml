@@ -1,0 +1,25 @@
+uploads = []
+
+[[generated]]
+id = "Opv-q2ucjUUOOVlyw3lYb"
+uri = "file://attached_assets/generated_images/borcovna_logo_fixed.png"
+type = "image"
+title = "borcovna logo fixed"
+
+[[generated]]
+id = "rWVdFo6EqFebJBqlNRyuH"
+uri = "file://attached_assets/generated_images/borcovna_logo_new.png"
+type = "image"
+title = "borcovna logo new"
+
+[[outputs]]
+id = "l8aApWNzlrxaxhC9SsnFV"
+uri = "file://attached_assets/generated_images/borcovna_logo_fixed.png"
+type = "image"
+title = "Verze 1 – upravená (3 řemeslníci bojují o kotouč)"
+
+[[outputs]]
+id = "UrG9Rl-pgmCLAtc6w4VUO"
+uri = "file://attached_assets/generated_images/borcovna_logo_new.png"
+type = "image"
+title = "Verze 2 – vlastní nová (dramatičtější kompozice)"
