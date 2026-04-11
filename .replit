@@ -34,3 +34,10 @@ externalPort = 3000
 [[ports]]
 localPort = 21039
 externalPort = 3002
+
+[userenv]
+
+[userenv.shared]
+SMTP_HOST = "smtp.wedos.net"
+SMTP_USER = "borcovna@roberton.cz"
+SMTP_PORT = "587"
