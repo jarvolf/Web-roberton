@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import { motion, AnimatePresence } from "framer-motion";
-import { CookingPot, DoorOpen, Baby, Package, Droplets } from "lucide-react";
+import { CookingPot, DoorOpen, Baby, Package, Droplets, Phone } from "lucide-react";
 
 import logoGroup from "@assets/IMG-20260410-WA0002_1775846111566.jpg";
 import logoSingle from "@assets/IMG-20260410-WA0001_1775846111605.jpg";
@@ -85,7 +85,7 @@ function Home() {
                   />
                 )}
               </div>
-              <span className={`text-xs uppercase tracking-widest font-semibold transition-opacity duration-300 ${isActive ? "opacity-100" : "opacity-0 h-0 overflow-hidden"}`}>
+              <span className={`text-xs uppercase tracking-widest font-semibold transition-colors duration-300 ${isActive ? "text-primary" : "text-muted-foreground"}`}>
                 {section.label}
               </span>
             </button>
@@ -139,8 +139,9 @@ function Home() {
         <a
           href="tel:+420606836630"
           data-testid="link-phone"
-          className="text-muted-foreground hover:text-primary transition-colors tracking-widest text-sm"
+          className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors tracking-widest text-sm"
         >
+          <Phone size={14} strokeWidth={1.5} />
           606 836 630
         </a>
       </footer>
