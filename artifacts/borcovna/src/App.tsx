@@ -1,11 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import NotFound from "@/pages/not-found";
 import { motion, AnimatePresence } from "framer-motion";
-import { CookingPot, DoorOpen, Baby, Package, Droplets, Phone } from "lucide-react";
+import { CookingPot, DoorOpen, Baby, Package, Droplets, Phone, MessageSquare } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 import logoGroup from "@assets/IMG-20260410-WA0002_1775846111566.jpg";
 import logoSingle from "@assets/IMG-20260410-WA0001_1775846111605.jpg";
@@ -35,28 +39,55 @@ const photos = {
   koupelny: [furn4, furn3, furn7, furn6, furn1],
 };
 
+type FormData = { jmeno: string; telefon: string; email: string; dotaz: string };
+type FormStatus = "idle" | "sending" | "sent" | "error";
+
 function Home() {
   const [activeSection, setActiveSection] = useState(sections[0].id);
+  const [isContactOpen, setIsContactOpen] = useState(false);
+  const [formData, setFormData] = useState<FormData>({ jmeno: "", telefon: "", email: "", dotaz: "" });
+  const [formStatus, setFormStatus] = useState<FormStatus>("idle");
+  const isMobile = useIsMobile();
 
-  // Force dark mode class on html
   useEffect(() => {
     document.documentElement.classList.add("dark");
   }, []);
+
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.telefon.trim()) return;
+    setFormStatus("sending");
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      if (res.ok) {
+        setFormStatus("sent");
+        setFormData({ jmeno: "", telefon: "", email: "", dotaz: "" });
+      } else {
+        setFormStatus("error");
+      }
+    } catch {
+      setFormStatus("error");
+    }
+  }, [formData]);
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center">
       {/* Hero / Header */}
       <header className="w-full flex flex-col items-center pt-16 pb-12 px-6 gap-8">
         <div className="flex flex-col md:flex-row items-center justify-center gap-6">
-          <img 
-            src={logoGroup} 
-            alt="Borcovna Logo" 
-            className="w-48 md:w-64 object-contain brightness-110 contrast-125" 
+          <img
+            src={logoGroup}
+            alt="Borcovna Logo"
+            className="w-48 md:w-64 object-contain brightness-110 contrast-125"
           />
-          <img 
-            src={logoSingle} 
-            alt="Borcovna Logo Mark" 
-            className="w-32 md:w-40 object-contain brightness-110 contrast-125 hidden md:block" 
+          <img
+            src={logoSingle}
+            alt="Borcovna Logo Mark"
+            className="w-32 md:w-40 object-contain brightness-110 contrast-125 hidden md:block"
           />
         </div>
       </header>
@@ -108,9 +139,9 @@ function Home() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
                 {photos[activeSection as keyof typeof photos].map((photo, i) => (
                   <div key={i} className="group relative overflow-hidden bg-muted aspect-square">
-                    <img 
-                      src={photo} 
-                      alt={`Furniture gallery ${i}`} 
+                    <img
+                      src={photo}
+                      alt={`Furniture gallery ${i}`}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-500" />
@@ -145,6 +176,93 @@ function Home() {
           606 836 630
         </a>
       </footer>
+
+      {/* Floating contact button */}
+      <button
+        onClick={() => { setIsContactOpen(true); setFormStatus("idle"); }}
+        data-testid="button-contact-open"
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-primary text-primary-foreground px-4 py-3 rounded-full shadow-xl hover:brightness-110 active:scale-95 transition-all duration-200"
+      >
+        <MessageSquare size={18} strokeWidth={1.5} />
+        <span className="text-sm font-semibold tracking-widest uppercase hidden sm:block">Napište nám</span>
+      </button>
+
+      {/* Contact sheet */}
+      <Sheet open={isContactOpen} onOpenChange={setIsContactOpen}>
+        <SheetContent
+          side={isMobile ? "bottom" : "right"}
+          className="bg-background border-border/30 flex flex-col gap-6 max-h-[92dvh] overflow-y-auto"
+        >
+          <SheetHeader className="text-left">
+            <SheetTitle className="text-foreground text-base font-bold tracking-widest uppercase">
+              Máte nějaké dotazy?
+            </SheetTitle>
+            <SheetDescription className="text-muted-foreground text-sm">
+              Napište nám
+            </SheetDescription>
+          </SheetHeader>
+
+          {formStatus === "sent" ? (
+            <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center py-12">
+              <p className="text-primary tracking-widest uppercase text-sm font-semibold">Zpráva odeslána!</p>
+              <p className="text-muted-foreground text-xs">Ozveme se vám co nejdříve.</p>
+              <button
+                onClick={() => setFormStatus("idle")}
+                className="text-xs text-muted-foreground hover:text-foreground underline mt-4 transition-colors"
+              >
+                Odeslat další dotaz
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              <Input
+                placeholder="Jméno"
+                value={formData.jmeno}
+                onChange={e => setFormData(p => ({ ...p, jmeno: e.target.value }))}
+                className="bg-muted/30 border-border/40 placeholder:text-muted-foreground/50"
+                data-testid="input-jmeno"
+              />
+              <div className="flex flex-col gap-1">
+                <Input
+                  placeholder="Telefon *"
+                  required
+                  value={formData.telefon}
+                  onChange={e => setFormData(p => ({ ...p, telefon: e.target.value }))}
+                  className="bg-muted/30 border-border/40 placeholder:text-muted-foreground/50"
+                  data-testid="input-telefon"
+                />
+                <span className="text-muted-foreground/60 text-xs pl-1">* povinný údaj</span>
+              </div>
+              <Input
+                placeholder="E-mail"
+                type="email"
+                value={formData.email}
+                onChange={e => setFormData(p => ({ ...p, email: e.target.value }))}
+                className="bg-muted/30 border-border/40 placeholder:text-muted-foreground/50"
+                data-testid="input-email"
+              />
+              <Textarea
+                placeholder="Váš dotaz"
+                value={formData.dotaz}
+                onChange={e => setFormData(p => ({ ...p, dotaz: e.target.value }))}
+                className="bg-muted/30 border-border/40 placeholder:text-muted-foreground/50 min-h-28 resize-none"
+                data-testid="input-dotaz"
+              />
+              {formStatus === "error" && (
+                <p className="text-destructive text-xs">Nepodařilo se odeslat zprávu. Zkuste to prosím znovu.</p>
+              )}
+              <button
+                type="submit"
+                disabled={formStatus === "sending" || !formData.telefon.trim()}
+                data-testid="button-contact-submit"
+                className="mt-1 bg-primary text-primary-foreground px-6 py-3 text-sm uppercase tracking-widest font-semibold disabled:opacity-50 hover:brightness-110 active:scale-95 transition-all duration-200"
+              >
+                {formStatus === "sending" ? "Odesílám..." : "Odeslat"}
+              </button>
+            </form>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
