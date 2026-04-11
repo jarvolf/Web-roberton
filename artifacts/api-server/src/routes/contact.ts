@@ -32,7 +32,7 @@ router.post("/contact", async (req, res) => {
     host: smtpHost,
     port: smtpPort,
     secure: smtpPort === 465,
-    auth: { user: smtpUser, pass: smtpPass },
+    auth: { type: "LOGIN", user: smtpUser, pass: smtpPass },
     tls: {
       rejectUnauthorized: false,
       ciphers: "DEFAULT@SECLEVEL=0",
