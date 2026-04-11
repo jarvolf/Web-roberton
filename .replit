@@ -38,6 +38,6 @@ externalPort = 3002
 [userenv]
 
 [userenv.shared]
-SMTP_HOST = "smtp.wedos.net"
+SMTP_HOST = "smtp.wedos.com"
 SMTP_USER = "borcovna@roberton.cz"
 SMTP_PORT = "587"

@@ -33,6 +33,11 @@ router.post("/contact", async (req, res) => {
     port: smtpPort,
     secure: smtpPort === 465,
     auth: { user: smtpUser, pass: smtpPass },
+    tls: {
+      rejectUnauthorized: false,
+      ciphers: "DEFAULT@SECLEVEL=0",
+      minDHSize: 512,
+    },
   });
 
   const text = [
