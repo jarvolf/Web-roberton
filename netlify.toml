@@ -1,6 +1,6 @@
 [build]
   base      = "/"
-  command   = "pnpm --filter @workspace/borcovna... run build"
+  command   = "pnpm install --no-frozen-lockfile && pnpm --filter @workspace/borcovna... run build"
   publish   = "artifacts/borcovna/dist/public"
   functions = "artifacts/borcovna/netlify/functions"
 
