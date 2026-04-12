@@ -1,31 +1,24 @@
-import { Router, type IRouter } from "express";
+import type { Handler } from "@netlify/functions";
 import nodemailer from "nodemailer";
 
-const router: IRouter = Router();
+export const handler: Handler = async (event) => {
+  if (event.httpMethod !== "POST") {
+    return { statusCode: 405, body: "Method Not Allowed" };
+  }
 
-router.post("/contact", async (req, res) => {
-  const { jmeno, telefon, email, dotaz } = req.body as {
-    jmeno?: string;
-    telefon?: string;
-    email?: string;
-    dotaz?: string;
-  };
+  const { jmeno, telefon, email, dotaz } = JSON.parse(event.body ?? "{}");
 
   if (!telefon || telefon.trim() === "") {
-    res.status(400).json({ error: "Telefon je povinný." });
-    return;
+    return { statusCode: 400, body: JSON.stringify({ error: "Telefon je povinný." }) };
   }
 
   const smtpHost = process.env["SMTP_HOST"];
   const smtpUser = process.env["SMTP_USER"];
   const smtpPass = process.env["SMTP_PASS"];
-  const smtpPort = Number(process.env["SMTP_PORT"] ?? "587");
+  const smtpPort = Number(process.env["SMTP_PORT"] ?? "465");
 
   if (!smtpHost || !smtpUser || !smtpPass) {
-    req.log.warn("SMTP not configured – logging contact form submission");
-    req.log.info({ jmeno, telefon, email, dotaz }, "Contact form submission");
-    res.json({ ok: true });
-    return;
+    return { statusCode: 500, body: JSON.stringify({ error: "SMTP není nakonfigurováno." }) };
   }
 
   const transporter = nodemailer.createTransport({
@@ -33,11 +26,7 @@ router.post("/contact", async (req, res) => {
     port: smtpPort,
     secure: smtpPort === 465,
     auth: { type: "LOGIN", user: smtpUser, pass: smtpPass },
-    tls: {
-      rejectUnauthorized: false,
-      ciphers: "DEFAULT@SECLEVEL=0",
-      minDHSize: 512,
-    },
+    tls: { rejectUnauthorized: false, ciphers: "DEFAULT@SECLEVEL=0", minDHSize: 512 },
   });
 
   const text = [
@@ -45,9 +34,7 @@ router.post("/contact", async (req, res) => {
     `Telefon: ${telefon}`,
     email ? `E-mail: ${email}` : null,
     dotaz ? `\nDotaz:\n${dotaz}` : null,
-  ]
-    .filter(Boolean)
-    .join("\n");
+  ].filter(Boolean).join("\n");
 
   try {
     await transporter.sendMail({
@@ -57,11 +44,9 @@ router.post("/contact", async (req, res) => {
       text,
       replyTo: email ?? undefined,
     });
-    res.json({ ok: true });
+    return { statusCode: 200, body: JSON.stringify({ ok: true }) };
   } catch (err) {
-    req.log.error({ err }, "Failed to send contact email");
-    res.status(500).json({ error: "Nepodařilo se odeslat zprávu." });
+    console.error("Failed to send email:", err);
+    return { statusCode: 500, body: JSON.stringify({ error: "Nepodařilo se odeslat zprávu." }) };
   }
-});
-
-export default router;
+};
