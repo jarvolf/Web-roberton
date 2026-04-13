@@ -89,12 +89,7 @@ function Home() {
           <img
             src={logoGroup}
             alt="Borcovna Logo"
-            className="w-48 md:w-64 object-contain brightness-110 contrast-125"
-          />
-          <img
-            src={logoSingle}
-            alt="Borcovna Logo Mark"
-            className="w-32 md:w-40 object-contain brightness-110 contrast-125 hidden md:block"
+            className="w-[72vw] max-w-2xl md:w-[42vw] md:max-w-4xl object-contain brightness-110 contrast-125"
           />
         </div>
       </header>
@@ -161,8 +156,8 @@ function Home() {
       </main>
 
       <footer className="w-full py-12 flex flex-col sm:flex-row justify-center items-center gap-6 sm:gap-10 border-t border-border/50">
-        <div className="flex items-center justify-end w-10 sm:w-14">
-          <img src={logoSingle} alt="Borcovna panáček" className="w-8 h-8 sm:w-10 sm:h-10 object-contain brightness-110 contrast-125 sm:scale-x-[-1]" />
+        <div className="flex items-center justify-end w-20 sm:w-24">
+          <img src={logoSingle} alt="Borcovna panáček" className="w-16 h-16 sm:w-20 sm:h-20 object-contain brightness-110 contrast-125 sm:scale-x-[-1]" />
         </div>
         <a
           href="mailto:borcovna@roberton.cz"
@@ -179,8 +174,8 @@ function Home() {
           <Phone size={14} strokeWidth={1.5} />
           606 836 630
         </a>
-        <div className="flex items-center justify-start w-10 sm:w-14">
-          <img src={logoSingle} alt="Borcovna panáček" className="w-8 h-8 sm:w-10 sm:h-10 object-contain brightness-110 contrast-125 sm:scale-x-[-1]" />
+        <div className="flex items-center justify-start w-20 sm:w-24">
+          <img src={logoSingle} alt="Borcovna panáček" className="w-16 h-16 sm:w-20 sm:h-20 object-contain brightness-110 contrast-125" />
         </div>
       </footer>
 
@@ -282,7 +277,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}> 
+        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
           <Router />
         </WouterRouter>
         <Toaster />
