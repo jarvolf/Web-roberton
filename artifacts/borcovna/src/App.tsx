@@ -161,6 +161,7 @@ function Home() {
       </main>
 
       <footer className="w-full py-12 flex flex-col sm:flex-row justify-center items-center gap-6 sm:gap-12 border-t border-border/50">
+        <img src={logoSingle} alt="Borcovna panáček" className="w-10 h-10 object-contain brightness-110 contrast-125 rotate-180 sm:scale-x-[-1]" />
         <a
           href="mailto:borcovna@roberton.cz"
           data-testid="link-email"
@@ -168,7 +169,6 @@ function Home() {
         >
           borcovna@roberton.cz
         </a>
-        <span className="hidden sm:block text-border/60">|</span>
         <a
           href="tel:+420606836630"
           data-testid="link-phone"
@@ -177,6 +177,7 @@ function Home() {
           <Phone size={14} strokeWidth={1.5} />
           606 836 630
         </a>
+        <img src={logoSingle} alt="Borcovna panáček" className="w-10 h-10 object-contain brightness-110 contrast-125 sm:scale-x-[-1]" />
       </footer>
 
       <button
