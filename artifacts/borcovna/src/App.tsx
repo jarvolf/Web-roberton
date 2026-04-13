@@ -76,7 +76,6 @@ function Home() {
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center">
-      {/* Hero / Header */}
       <header className="w-full flex flex-col items-center pt-12 pb-12 px-6 gap-6">
         <div className="flex flex-col items-center gap-1">
           <h1 className="text-5xl md:text-7xl font-black tracking-tight text-white leading-none">
@@ -100,7 +99,6 @@ function Home() {
         </div>
       </header>
 
-      {/* Navigation – sticky */}
       <nav className="sticky top-0 z-50 w-full px-2 md:px-6 py-3 flex justify-between bg-background/90 backdrop-blur-sm border-b border-border/30">
         {sections.map((section) => {
           const isActive = activeSection === section.id;
@@ -130,7 +128,6 @@ function Home() {
         })}
       </nav>
 
-      {/* Gallery */}
       <main className="w-full max-w-6xl px-6 pt-10 pb-24 flex-grow flex flex-col items-center">
         <AnimatePresence mode="wait">
           <motion.div
@@ -163,7 +160,6 @@ function Home() {
         </AnimatePresence>
       </main>
 
-      {/* Footer */}
       <footer className="w-full py-12 flex flex-col sm:flex-row justify-center items-center gap-6 sm:gap-12 border-t border-border/50">
         <a
           href="mailto:borcovna@roberton.cz"
@@ -183,7 +179,6 @@ function Home() {
         </a>
       </footer>
 
-      {/* Floating contact button */}
       <button
         onClick={() => { setIsContactOpen(true); setFormStatus("idle"); }}
         data-testid="button-contact-open"
@@ -193,17 +188,16 @@ function Home() {
         <span className="text-sm font-semibold tracking-widest uppercase hidden sm:block">Napište nám</span>
       </button>
 
-      {/* Contact sheet */}
       <Sheet open={isContactOpen} onOpenChange={setIsContactOpen}>
         <SheetContent
           side={isMobile ? "bottom" : "right"}
           className="bg-background border-border/30 flex flex-col gap-6 max-h-[92dvh] overflow-y-auto"
         >
           <SheetHeader className="text-left">
-            <SheetTitle className="text-foreground text-base font-bold tracking-widest uppercase">
+            <SheetTitle className="text-white text-base font-bold tracking-widest uppercase">
               Máte nějaké dotazy?
             </SheetTitle>
-            <SheetDescription className="text-muted-foreground text-sm">
+            <SheetDescription className="text-white text-sm">
               Napište nám
             </SheetDescription>
           </SheetHeader>
@@ -211,47 +205,44 @@ function Home() {
           {formStatus === "sent" ? (
             <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center py-12">
               <p className="text-primary tracking-widest uppercase text-sm font-semibold">Zpráva odeslána!</p>
-              <p className="text-muted-foreground text-xs">Ozveme se vám co nejdříve.</p>
+              <p className="text-white text-xs">Ozveme se vám co nejdříve.</p>
               <button
                 onClick={() => setFormStatus("idle")}
-                className="text-xs text-muted-foreground hover:text-foreground underline mt-4 transition-colors"
+                className="text-xs text-white hover:text-foreground underline mt-4 transition-colors"
               >
                 Odeslat další dotaz
               </button>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-white">
               <Input
                 placeholder="Jméno"
                 value={formData.jmeno}
                 onChange={e => setFormData(p => ({ ...p, jmeno: e.target.value }))}
-                className="bg-muted/30 border-border/40 placeholder:text-muted-foreground/50"
+                className="bg-muted/30 border-border/40 placeholder:text-white/50 text-white"
                 data-testid="input-jmeno"
               />
-              <div className="flex flex-col gap-1">
-                <Input
-                  placeholder="Telefon *"
-                  required
-                  value={formData.telefon}
-                  onChange={e => setFormData(p => ({ ...p, telefon: e.target.value }))}
-                  className="bg-muted/30 border-border/40 placeholder:text-muted-foreground/50"
-                  data-testid="input-telefon"
-                />
-                <span className="text-muted-foreground/60 text-xs pl-1">* povinný údaj</span>
-              </div>
+              <Input
+                placeholder="Telefon (povinný údaj)"
+                required
+                value={formData.telefon}
+                onChange={e => setFormData(p => ({ ...p, telefon: e.target.value }))}
+                className="bg-muted/30 border-border/40 placeholder:text-white/50 text-white"
+                data-testid="input-telefon"
+              />
               <Input
                 placeholder="E-mail"
                 type="email"
                 value={formData.email}
                 onChange={e => setFormData(p => ({ ...p, email: e.target.value }))}
-                className="bg-muted/30 border-border/40 placeholder:text-muted-foreground/50"
+                className="bg-muted/30 border-border/40 placeholder:text-white/50 text-white"
                 data-testid="input-email"
               />
               <Textarea
                 placeholder="Váš dotaz"
                 value={formData.dotaz}
                 onChange={e => setFormData(p => ({ ...p, dotaz: e.target.value }))}
-                className="bg-muted/30 border-border/40 placeholder:text-muted-foreground/50 min-h-28 resize-none"
+                className="bg-muted/30 border-border/40 placeholder:text-white/50 min-h-28 resize-none text-white"
                 data-testid="input-dotaz"
               />
               {formStatus === "error" && (
@@ -286,7 +277,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}> 
           <Router />
         </WouterRouter>
         <Toaster />
