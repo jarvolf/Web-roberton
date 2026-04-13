@@ -93,7 +93,7 @@ function Home() {
       </header>
 
       {/* Navigation – sticky */}
-      <nav className="sticky top-0 z-50 w-full px-6 py-4 flex justify-center gap-8 md:gap-16 bg-background/90 backdrop-blur-sm border-b border-border/30">
+      <nav className="sticky top-0 z-50 w-full px-2 md:px-6 py-3 flex justify-between bg-background/90 backdrop-blur-sm border-b border-border/30">
         {sections.map((section) => {
           const isActive = activeSection === section.id;
           const Icon = section.icon;
@@ -102,7 +102,7 @@ function Home() {
               key={section.id}
               onClick={() => setActiveSection(section.id)}
               data-testid={`nav-${section.id}`}
-              className={`relative flex flex-col items-center gap-2 px-3 py-2 transition-colors duration-300 ${
+              className={`relative flex flex-col items-center gap-1.5 px-1.5 py-2 md:px-3 flex-1 transition-colors duration-300 ${
                 isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -113,8 +113,8 @@ function Home() {
                   transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 />
               )}
-              <Icon size={28} strokeWidth={1.5} />
-              <span className={`text-xs uppercase tracking-widest font-semibold transition-colors duration-300 ${isActive ? "text-primary" : "text-muted-foreground"}`}>
+              <Icon size={22} strokeWidth={1.5} className="md:w-7 md:h-7" />
+              <span className={`text-[10px] md:text-xs uppercase tracking-tight md:tracking-widest font-semibold transition-colors duration-300 leading-tight text-center ${isActive ? "text-primary" : "text-muted-foreground"}`}>
                 {section.label}
               </span>
             </button>
