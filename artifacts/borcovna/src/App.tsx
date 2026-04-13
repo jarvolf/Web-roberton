@@ -76,7 +76,7 @@ function Home() {
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center">
-      <header className="w-full flex flex-col items-center pt-12 pb-12 px-6 gap-6">
+      <header className="w-full flex flex-col items-center pt-12 pb-4 px-6 gap-6">
         <div className="flex flex-col items-center gap-1">
           <h1 className="text-5xl md:text-7xl font-black tracking-tight text-white leading-none">
             ROBERTON.CZ
@@ -89,7 +89,7 @@ function Home() {
           <img
             src={logoGroup}
             alt="Borcovna Logo"
-            className="w-[72vw] max-w-2xl md:w-[42vw] md:max-w-4xl object-contain brightness-110 contrast-125"
+            className="w-[72vw] max-w-2xl md:w-[42vw] md:max-w-4xl object-cover brightness-110 contrast-125 aspect-[1.15] overflow-hidden"
           />
         </div>
       </header>
@@ -123,7 +123,7 @@ function Home() {
         })}
       </nav>
 
-      <main className="w-full max-w-6xl px-6 pt-10 pb-24 flex-grow flex flex-col items-center">
+      <main className="w-full max-w-6xl px-6 pt-2 pb-24 flex-grow flex flex-col items-center">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeSection}
@@ -277,7 +277,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}> 
           <Router />
         </WouterRouter>
         <Toaster />
