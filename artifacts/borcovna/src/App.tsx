@@ -75,7 +75,7 @@ function Home() {
   }, [formData]);
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center">
+    <div className="min-h-screen w-full flex flex-col items-center pb-32 md:pb-24">
       <header className="w-full flex flex-col items-center pt-12 pb-4 px-6 gap-6">
         <div className="flex flex-col items-center gap-1">
           <h1 className="text-5xl md:text-7xl font-black tracking-tight text-white leading-none">
@@ -155,34 +155,34 @@ function Home() {
         </AnimatePresence>
       </main>
 
-      <footer className="w-full py-12 flex flex-col sm:flex-row justify-center items-center gap-6 sm:gap-10 border-t border-border/50">
-        <div className="flex items-center justify-end w-20 sm:w-24">
-          <img src={logoSingle} alt="Borcovna panáček" className="w-16 h-16 sm:w-20 sm:h-20 object-contain brightness-110 contrast-125 sm:scale-x-[-1]" />
+      <footer className="fixed bottom-0 left-0 right-0 z-40 w-full bg-background/85 backdrop-blur-sm border-t border-border/50 py-3 md:py-4 flex items-center justify-center gap-2 md:gap-6 px-2 md:px-6">
+        <div className="flex items-center justify-end flex-1 min-w-0">
+          <img src={logoSingle} alt="Borcovna panáček" className="w-10 h-10 md:w-12 md:h-12 object-contain brightness-110 contrast-125 sm:scale-x-[-1]" />
         </div>
         <a
           href="mailto:borcovna@roberton.cz"
           data-testid="link-email"
-          className="text-white hover:text-primary transition-colors tracking-widest text-xl md:text-[2rem] text-center"
+          className="text-white hover:text-primary transition-colors tracking-widest text-[10px] md:text-sm text-center truncate"
         >
           borcovna@roberton.cz
         </a>
         <a
           href="tel:+420606836630"
           data-testid="link-phone"
-          className="flex items-center gap-2 text-white hover:text-primary transition-colors tracking-widest text-xl md:text-[2rem] text-center"
+          className="flex items-center gap-1 md:gap-2 text-white hover:text-primary transition-colors tracking-widest text-[10px] md:text-sm text-center truncate"
         >
-          <Phone size={20} strokeWidth={1.5} />
+          <Phone size={12} className="md:w-[14px] md:h-[14px]" strokeWidth={1.5} />
           606 836 630
         </a>
-        <div className="flex items-center justify-start w-20 sm:w-24">
-          <img src={logoSingle} alt="Borcovna panáček" className="w-16 h-16 sm:w-20 sm:h-20 object-contain brightness-110 contrast-125" />
+        <div className="flex items-center justify-start flex-1 min-w-0">
+          <img src={logoSingle} alt="Borcovna panáček" className="w-10 h-10 md:w-12 md:h-12 object-contain brightness-110 contrast-125" />
         </div>
       </footer>
 
       <button
         onClick={() => { setIsContactOpen(true); setFormStatus("idle"); }}
         data-testid="button-contact-open"
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-primary text-primary-foreground px-4 py-3 rounded-full shadow-xl hover:brightness-110 active:scale-95 transition-all duration-200"
+        className="fixed bottom-20 md:bottom-24 right-6 z-50 flex items-center gap-2 bg-primary text-primary-foreground px-4 py-3 rounded-full shadow-xl hover:brightness-110 active:scale-95 transition-all duration-200"
       >
         <MessageSquare size={18} strokeWidth={1.5} />
         <span className="text-sm font-semibold tracking-widest uppercase hidden sm:block">Napište nám</span>
@@ -277,7 +277,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}> 
+        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
           <Router />
         </WouterRouter>
         <Toaster />
