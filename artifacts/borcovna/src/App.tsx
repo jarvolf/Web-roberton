@@ -162,14 +162,14 @@ function Home() {
         <a
           href="mailto:borcovna@roberton.cz"
           data-testid="link-email"
-          className="text-white hover:text-primary transition-colors tracking-widest text-sm text-center"
+          className="text-white hover:text-primary transition-colors tracking-widest text-sm text-center md:text-[2rem]"
         >
           borcovna@roberton.cz
         </a>
         <a
           href="tel:+420606836630"
           data-testid="link-phone"
-          className="flex items-center gap-2 text-white hover:text-primary transition-colors tracking-widest text-sm text-center"
+          className="flex items-center gap-2 text-white hover:text-primary transition-colors tracking-widest text-sm text-center md:text-[2rem]"
         >
           <Phone size={14} strokeWidth={1.5} />
           606 836 630
