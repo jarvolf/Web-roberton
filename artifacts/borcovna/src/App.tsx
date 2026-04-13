@@ -77,7 +77,15 @@ function Home() {
   return (
     <div className="min-h-screen w-full flex flex-col items-center">
       {/* Hero / Header */}
-      <header className="w-full flex flex-col items-center pt-16 pb-12 px-6 gap-8">
+      <header className="w-full flex flex-col items-center pt-12 pb-12 px-6 gap-6">
+        <div className="flex flex-col items-center gap-1">
+          <h1 className="text-5xl md:text-7xl font-black tracking-tight text-white leading-none">
+            ROBERTON.CZ
+          </h1>
+          <p className="text-xs md:text-sm tracking-[0.3em] uppercase text-white font-medium">
+            Truhlářská výroba na míru
+          </p>
+        </div>
         <div className="flex flex-col md:flex-row items-center justify-center gap-6">
           <img
             src={logoGroup}
