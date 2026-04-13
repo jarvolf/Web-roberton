@@ -160,24 +160,28 @@ function Home() {
         </AnimatePresence>
       </main>
 
-      <footer className="w-full py-12 flex flex-col sm:flex-row justify-center items-center gap-6 sm:gap-12 border-t border-border/50">
-        <img src={logoSingle} alt="Borcovna panáček" className="w-10 h-10 object-contain brightness-110 contrast-125 rotate-180 sm:scale-x-[-1]" />
+      <footer className="w-full py-12 flex flex-col sm:flex-row justify-center items-center gap-6 sm:gap-10 border-t border-border/50">
+        <div className="flex items-center justify-end w-10 sm:w-14">
+          <img src={logoSingle} alt="Borcovna panáček" className="w-8 h-8 sm:w-10 sm:h-10 object-contain brightness-110 contrast-125 sm:scale-x-[-1]" />
+        </div>
         <a
           href="mailto:borcovna@roberton.cz"
           data-testid="link-email"
-          className="text-muted-foreground hover:text-primary transition-colors tracking-widest text-sm"
+          className="text-white hover:text-primary transition-colors tracking-widest text-sm text-center"
         >
           borcovna@roberton.cz
         </a>
         <a
           href="tel:+420606836630"
           data-testid="link-phone"
-          className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors tracking-widest text-sm"
+          className="flex items-center gap-2 text-white hover:text-primary transition-colors tracking-widest text-sm text-center"
         >
           <Phone size={14} strokeWidth={1.5} />
           606 836 630
         </a>
-        <img src={logoSingle} alt="Borcovna panáček" className="w-10 h-10 object-contain brightness-110 contrast-125 sm:scale-x-[-1]" />
+        <div className="flex items-center justify-start w-10 sm:w-14">
+          <img src={logoSingle} alt="Borcovna panáček" className="w-8 h-8 sm:w-10 sm:h-10 object-contain brightness-110 contrast-125 sm:scale-x-[-1]" />
+        </div>
       </footer>
 
       <button
