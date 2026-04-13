@@ -162,16 +162,16 @@ function Home() {
         <a
           href="mailto:borcovna@roberton.cz"
           data-testid="link-email"
-          className="text-white hover:text-primary transition-colors tracking-widest text-sm text-center md:text-[2rem]"
+          className="text-white hover:text-primary transition-colors tracking-widest text-xl md:text-[2rem] text-center"
         >
           borcovna@roberton.cz
         </a>
         <a
           href="tel:+420606836630"
           data-testid="link-phone"
-          className="flex items-center gap-2 text-white hover:text-primary transition-colors tracking-widest text-sm text-center md:text-[2rem]"
+          className="flex items-center gap-2 text-white hover:text-primary transition-colors tracking-widest text-xl md:text-[2rem] text-center"
         >
-          <Phone size={14} strokeWidth={1.5} />
+          <Phone size={20} strokeWidth={1.5} />
           606 836 630
         </a>
         <div className="flex items-center justify-start w-20 sm:w-24">
@@ -277,7 +277,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}> 
           <Router />
         </WouterRouter>
         <Toaster />
