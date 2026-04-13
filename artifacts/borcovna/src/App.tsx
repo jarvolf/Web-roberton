@@ -94,7 +94,7 @@ function Home() {
         </div>
       </header>
 
-      <nav className="sticky top-0 z-50 w-full px-2 md:px-6 py-3 flex justify-between bg-background/90 backdrop-blur-sm border-b border-border/30">
+      <nav className="sticky top-0 z-50 w-full px-2 md:px-6 py-3 flex justify-between bg-background/50 backdrop-blur-sm border-b border-border/30">
         {sections.map((section) => {
           const isActive = activeSection === section.id;
           const Icon = section.icon;
@@ -277,7 +277,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}> 
+        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
           <Router />
         </WouterRouter>
         <Toaster />
