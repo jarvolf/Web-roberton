@@ -102,20 +102,18 @@ function Home() {
               key={section.id}
               onClick={() => setActiveSection(section.id)}
               data-testid={`nav-${section.id}`}
-              className={`flex flex-col items-center gap-2 transition-colors duration-300 ${
+              className={`relative flex flex-col items-center gap-2 px-3 py-2 transition-colors duration-300 ${
                 isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <div className="relative">
-                <Icon size={28} strokeWidth={1.5} />
-                {isActive && (
-                  <motion.div
-                    layoutId="activeTab"
-                    className="absolute -inset-3 border border-primary opacity-50"
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                  />
-                )}
-              </div>
+              {isActive && (
+                <motion.div
+                  layoutId="activeTab"
+                  className="absolute inset-0 border border-primary opacity-50"
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                />
+              )}
+              <Icon size={28} strokeWidth={1.5} />
               <span className={`text-xs uppercase tracking-widest font-semibold transition-colors duration-300 ${isActive ? "text-primary" : "text-muted-foreground"}`}>
                 {section.label}
               </span>
