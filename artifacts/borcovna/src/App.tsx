@@ -155,14 +155,14 @@ function Home() {
         <div className="flex items-center justify-end flex-1 min-w-0">
           <img src={logoSingle} alt="Borcovna panáček" className="w-10 h-10 md:w-12 md:h-12 object-contain brightness-110 contrast-125 sm:scale-x-[-1]" />
         </div>
-        
+        <a
           href="mailto:borcovna@roberton.cz"
           data-testid="link-email"
           className="text-white hover:text-primary transition-colors tracking-widest text-[10px] md:text-sm text-center truncate"
         >
           borcovna@roberton.cz
         </a>
-        
+        <a
           href="tel:+420606836630"
           data-testid="link-phone"
           className="flex items-center gap-1 md:gap-2 text-white hover:text-primary transition-colors tracking-widest text-[10px] md:text-sm text-center truncate"
