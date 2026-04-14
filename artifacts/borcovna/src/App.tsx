@@ -49,13 +49,17 @@ function Home() {
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.telefon.trim()) return;
+    const telefon = formData.telefon.replace(/\s/g, "");
+if (!telefon || telefon.length < 9) {
+  alert("Zadejte prosím platné telefonní číslo (min. 9 číslic).");
+  return;
+}
     setFormStatus("sending");
     try {
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, telefon }),
       });
       if (res.ok) {
         setFormStatus("sent");
