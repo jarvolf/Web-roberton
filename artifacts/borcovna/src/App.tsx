@@ -269,7 +269,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
-      <Route path="/upload" component={Upload} />
+      <Route path="/foto" component={Upload} />
       <Route component={NotFound} />
     </Switch>
   );
