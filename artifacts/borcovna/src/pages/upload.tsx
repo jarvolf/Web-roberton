@@ -40,6 +40,7 @@ interface FileEntry {
 }
 
 export default function Upload() {
+  const [showPassword, setShowPassword] = useState(false);
   const [password, setPassword] = useState("");
   const [gallery, setGallery] = useState(GALLERIES[0].id);
   const [files, setFiles] = useState<FileEntry[]>([]);
@@ -112,13 +113,22 @@ export default function Upload() {
       <h1 className="text-2xl font-black tracking-widest uppercase mb-8">Nahrát fotky</h1>
 
       <div className="w-full max-w-md flex flex-col gap-4">
-        <input
-          type="password"
-          placeholder="Heslo"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          className="bg-muted/30 border border-border/40 px-4 py-3 text-white placeholder:text-white/50 outline-none"
-        />
+      <div className="relative">
+  <input
+    type={showPassword ? "text" : "password"}
+    placeholder="Heslo"
+    value={password}
+    onChange={e => setPassword(e.target.value)}
+    className="w-full bg-muted/30 border border-border/40 px-4 py-3 text-white placeholder:text-white/50 outline-none pr-12"
+  />
+  <button
+    type="button"
+    onClick={() => setShowPassword(p => !p)}
+    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors"
+  >
+    {showPassword ? "🙈" : "👁️"}
+  </button>
+</div>
 
         <select
           value={gallery}
