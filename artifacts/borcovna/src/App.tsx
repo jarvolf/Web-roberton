@@ -30,14 +30,6 @@ type FormStatus = "idle" | "sending" | "sent" | "error";
 function Home() {
   const [activeSection, setActiveSection] = useState(sections[0].id);
   const [photos, setPhotos] = useState<Record<string, string[]>>({});
-
-useEffect(() => {
-  sections.forEach(async (section) => {
-    const res = await fetch(`/.netlify/functions/get-photos?gallery=${section.id}`);
-    const data = await res.json();
-    setPhotos(prev => ({ ...prev, [section.id]: data.photos ?? [] }));
-  });
-}, []);
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [formData, setFormData] = useState<FormData>({ jmeno: "", telefon: "", email: "", dotaz: "" });
   const [formStatus, setFormStatus] = useState<FormStatus>("idle");
@@ -45,6 +37,14 @@ useEffect(() => {
 
   useEffect(() => {
     document.documentElement.classList.add("dark");
+  }, []);
+
+  useEffect(() => {
+    sections.forEach(async (section) => {
+      const res = await fetch(`/.netlify/functions/get-photos?gallery=${section.id}`);
+      const data = await res.json();
+      setPhotos(prev => ({ ...prev, [section.id]: data.photos ?? [] }));
+    });
   }, []);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
@@ -67,6 +67,8 @@ useEffect(() => {
       setFormStatus("error");
     }
   }, [formData]);
+
+  const currentPhotos = photos[activeSection] ?? [];
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center pb-32 md:pb-24">
@@ -127,9 +129,9 @@ useEffect(() => {
             transition={{ duration: 0.3 }}
             className="w-full"
           >
-            {photos[activeSection as keyof typeof photos].length > 0 ? (
+            {currentPhotos.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-                {photos[activeSection as keyof typeof photos].map((photo, i) => (
+                {currentPhotos.map((photo, i) => (
                   <div key={i} className="group relative overflow-hidden bg-muted aspect-square">
                     <img
                       src={photo}
@@ -153,14 +155,14 @@ useEffect(() => {
         <div className="flex items-center justify-end flex-1 min-w-0">
           <img src={logoSingle} alt="Borcovna panáček" className="w-10 h-10 md:w-12 md:h-12 object-contain brightness-110 contrast-125 sm:scale-x-[-1]" />
         </div>
-        <a
+        
           href="mailto:borcovna@roberton.cz"
           data-testid="link-email"
           className="text-white hover:text-primary transition-colors tracking-widest text-[10px] md:text-sm text-center truncate"
         >
           borcovna@roberton.cz
         </a>
-        <a
+        
           href="tel:+420606836630"
           data-testid="link-phone"
           className="flex items-center gap-1 md:gap-2 text-white hover:text-primary transition-colors tracking-widest text-[10px] md:text-sm text-center truncate"
