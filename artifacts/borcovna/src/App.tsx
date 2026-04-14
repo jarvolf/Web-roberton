@@ -1,3 +1,4 @@
+import Upload from "@/pages/upload";
 import { useState, useEffect, useCallback } from "react";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -268,6 +269,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/upload" component={Upload} />
       <Route component={NotFound} />
     </Switch>
   );
