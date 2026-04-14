@@ -51,7 +51,7 @@ function Home() {
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     const telefon = formData.telefon.replace(/\s/g, "");
-if (!telefon || telefon.length < 9) {
+if (!telefon || telefon.replace(/\D/g, "").length < 9) {
   alert("Zadejte prosím platné telefonní číslo (min. 9 číslic).");
   return;
 }
