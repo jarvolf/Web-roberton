@@ -13,13 +13,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 import logoGroup from "@assets/IMG-20260410-WA0002_1775846111566.jpg";
 import logoSingle from "@assets/IMG-20260410-WA0001_1775846111605.jpg";
-import furn1 from "@assets/IMG-20251015-WA0006_1775846111618.jpg";
-import furn2 from "@assets/IMG-20251015-WA0005_1775846111635.jpg";
-import furn3 from "@assets/IMG-20251015-WA0004_1775846111652.jpg";
-import furn4 from "@assets/IMG-20251015-WA0002_1775846111664.jpg";
-import furn5 from "@assets/IMG-20251015-WA0003_1775846111675.jpg";
-import furn6 from "@assets/IMG-20251015-WA0001_1775846111686.jpg";
-import furn7 from "@assets/IMG-20251015-WA0000_1775846111696.jpg";
 
 const queryClient = new QueryClient();
 
@@ -31,19 +24,20 @@ const sections = [
   { id: "koupelny", label: "Koupelny", icon: Droplets },
 ];
 
-const photos = {
-  kuchyne: [furn2, furn5, furn6, furn3, furn4],
-  predsine: [furn1, furn7, furn4, furn2, furn6],
-  detske: [furn3, furn6, furn1, furn5, furn7],
-  skrine: [furn5, furn6, furn1, furn7, furn2],
-  koupelny: [furn4, furn3, furn7, furn6, furn1],
-};
-
 type FormData = { jmeno: string; telefon: string; email: string; dotaz: string };
 type FormStatus = "idle" | "sending" | "sent" | "error";
 
 function Home() {
   const [activeSection, setActiveSection] = useState(sections[0].id);
+  const [photos, setPhotos] = useState<Record<string, string[]>>({});
+
+useEffect(() => {
+  sections.forEach(async (section) => {
+    const res = await fetch(`/.netlify/functions/get-photos?gallery=${section.id}`);
+    const data = await res.json();
+    setPhotos(prev => ({ ...prev, [section.id]: data.photos ?? [] }));
+  });
+}, []);
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [formData, setFormData] = useState<FormData>({ jmeno: "", telefon: "", email: "", dotaz: "" });
   const [formStatus, setFormStatus] = useState<FormStatus>("idle");
