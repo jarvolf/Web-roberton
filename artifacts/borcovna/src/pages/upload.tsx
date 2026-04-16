@@ -237,15 +237,3 @@ export default function Upload() {
     </div>
   );
 }
-Zkopíruj celý kód, nahraď celý soubor upload.tsx a ulož. Ozvi se, až to budeš mít.
-
-
-
-
-
-
-Claude is AI and can make mistakes. Please double-check responses.
-
-
-
-
