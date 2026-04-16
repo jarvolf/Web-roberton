@@ -149,7 +149,7 @@ if (!telefon || telefon.replace(/\D/g, "").length < 9) {
               </div>
             ) : (
               <div className="w-full py-32 flex justify-center items-center">
-                <p className="text-muted-foreground tracking-widest uppercase text-sm">Fotky přibývají</p>
+                <p className="text-muted-foreground tracking-widest uppercase text-sm">Fotky už jsou na cestě</p>
               </div>
             )}
           </motion.div>
