@@ -42,7 +42,7 @@ function Home() {
 
   useEffect(() => {
     sections.forEach(async (section) => {
-      const res = await fetch(`/.netlify/functions/get-photos?gallery=${section.id}`);
+      const res = await fetch(`https://get-photos.jarvolf93.workers.dev/?gallery=${section.id}`);
       const data = await res.json();
       setPhotos(prev => ({ ...prev, [section.id]: data.photos ?? [] }));
     });
@@ -57,7 +57,7 @@ if (!telefon || telefon.replace(/\D/g, "").length < 9) {
 }
     setFormStatus("sending");
     try {
-      const res = await fetch("/api/contact", {
+      const res = await fetch("https://contact-form.jarvolf93.workers.dev/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...formData, telefon }),
@@ -196,11 +196,8 @@ if (!telefon || telefon.replace(/\D/g, "").length < 9) {
         >
           <SheetHeader className="text-left">
             <SheetTitle className="text-white text-base font-bold tracking-widest uppercase">
-              Máte nějaké dotazy?
-            </SheetTitle>
-            <SheetDescription className="text-white text-sm">
               Napište nám
-            </SheetDescription>
+            </SheetTitle>           
           </SheetHeader>
 
           {formStatus === "sent" ? (

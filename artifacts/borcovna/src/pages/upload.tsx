@@ -51,7 +51,7 @@ export default function Upload() {
 
   useEffect(() => {
     const fetchPhotos = async () => {
-      const res = await fetch(`/.netlify/functions/get-photos?gallery=${gallery}`);
+      const res = await fetch(`https://get-photos.jarvolf93.workers.dev/?gallery=${gallery}`);
       const data = await res.json();
       setLoadedPhotos(data.photos ?? []);
     };
@@ -79,11 +79,24 @@ export default function Upload() {
         const filename = file.name.replace(/\.[^.]+$/, "") + ".jpg";
 
         updateStatus(i, "uploading");
-        const res = await fetch("/.netlify/functions/upload-photo", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ password, gallery, filename, contentType: "image/jpeg" }),
-        });
+       // Convert blob to base64
+const reader = new FileReader();
+const base64Data = await new Promise((resolve) => {
+  reader.onloadend = () => resolve(reader.result.split(',')[1]);
+  reader.readAsDataURL(blob);
+});
+
+const res = await fetch("https://upload-photo.jarvolf93.workers.dev/", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ 
+    password, 
+    gallery, 
+    filename, 
+    contentType: "image/jpeg",
+    fileData: base64Data 
+  }),
+});
 
         if (!res.ok) {
           const data = await res.json();
@@ -91,18 +104,7 @@ export default function Upload() {
           continue;
         }
 
-        const { uploadUrl } = await res.json();
-        const uploadRes = await fetch(uploadUrl, {
-          method: "PUT",
-          headers: { "Content-Type": "image/jpeg" },
-          body: blob,
-        });
-
-        if (!uploadRes.ok) {
-          updateStatus(i, "error", "Upload do R2 selhal");
-        } else {
-          updateStatus(i, "done");
-        }
+        updateStatus(i, "done");
       } catch (err) {
         updateStatus(i, "error", String(err));
       }
@@ -111,7 +113,7 @@ export default function Upload() {
     setRunning(false);
     
     // Reload photos after upload
-    const res = await fetch(`/.netlify/functions/get-photos?gallery=${gallery}`);
+    const res = await fetch(`https://get-photos.jarvolf93.workers.dev/?gallery=${gallery}`);
     const data = await res.json();
     setLoadedPhotos(data.photos ?? []);
   };
@@ -122,7 +124,7 @@ export default function Upload() {
     
     setDeleting(filename);
     try {
-      const res = await fetch("/.netlify/functions/delete-photo", {
+      const res = await fetch("https://delete-photo.jarvolf93.workers.dev/", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password, filename }),

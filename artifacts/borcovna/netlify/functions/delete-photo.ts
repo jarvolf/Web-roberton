@@ -1,7 +1,7 @@
 import type { Handler, HandlerEvent } from "@netlify/functions";
 import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
 
-const CORRECT_PASSWORD = "Borcovna2024!";
+const CORRECT_PASSWORD = "Robert123+";
 
 const s3Client = new S3Client({
   region: "auto",
