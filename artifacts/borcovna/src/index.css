@@ -45,7 +45,9 @@
     background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
     background-size: 20px 20px;
   }
-}/* Fix pro všechny bílé inputy */
+}
+
+/* Fix pro všechny bílé inputy - vyšší specificita */
 input[type="text"],
 input[type="email"],
 input[type="tel"],
@@ -66,8 +68,36 @@ textarea::placeholder {
 /* Autofill fix (Chrome žlutý background) */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
-input:-webkit-autofill:focus {
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
   -webkit-text-fill-color: white !important;
   -webkit-box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.05) inset !important;
   transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Fix pro červený hover a active state */
+button:hover,
+a:hover {
+  color: hsl(0, 100%, 50%) !important;
+}
+
+[data-state="active"] {
+  color: hsl(0, 100%, 50%) !important;
+  border-bottom: 2px solid hsl(0, 100%, 50%) !important;
+}
+
+/* Zajisti červený border pro tlačítka s primary */
+.border-primary,
+button.border-primary {
+  border-color: hsl(0, 100%, 50%) !important;
+}
+
+/* Fix pro gallery tabs */
+[role="tablist"] button[data-state="active"] {
+  color: hsl(0, 100%, 50%) !important;
+  border-color: hsl(0, 100%, 50%) !important;
+}
+
+[role="tablist"] button:hover {
+  color: hsl(0, 100%, 50%) !important;
 }

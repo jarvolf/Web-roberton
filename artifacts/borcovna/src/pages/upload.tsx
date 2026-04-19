@@ -53,7 +53,7 @@ export default function Upload() {
     const fetchPhotos = async () => {
       const res = await fetch(`https://get-photos.jarvolf93.workers.dev/?gallery=${gallery}`);
       const data = await res.json();
-      setLoadedPhotos(data.photos ?? []);
+      setLoadedPhotos(data.photos?.map((p: any) => p.url) ?? []);
     };
     fetchPhotos();
   }, [gallery]);
@@ -79,24 +79,28 @@ export default function Upload() {
         const filename = file.name.replace(/\.[^.]+$/, "") + ".jpg";
 
         updateStatus(i, "uploading");
-       // Convert blob to base64
-const reader = new FileReader();
-const base64Data = await new Promise((resolve) => {
-  reader.onloadend = () => resolve(reader.result.split(',')[1]);
-  reader.readAsDataURL(blob);
-});
+        
+        // Convert blob to base64
+        const base64Data = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const result = reader.result as string;
+            resolve(result.split(',')[1]);
+          };
+          reader.readAsDataURL(blob);
+        });
 
-const res = await fetch("https://upload-photo.jarvolf93.workers.dev/", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ 
-    password, 
-    gallery, 
-    filename, 
-    contentType: "image/jpeg",
-    fileData: base64Data 
-  }),
-});
+        const res = await fetch("https://upload-photo.jarvolf93.workers.dev/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            password, 
+            gallery, 
+            filename, 
+            contentType: "image/jpeg",
+            fileData: base64Data 
+          }),
+        });
 
         if (!res.ok) {
           const data = await res.json();
@@ -115,7 +119,7 @@ const res = await fetch("https://upload-photo.jarvolf93.workers.dev/", {
     // Reload photos after upload
     const res = await fetch(`https://get-photos.jarvolf93.workers.dev/?gallery=${gallery}`);
     const data = await res.json();
-    setLoadedPhotos(data.photos ?? []);
+    setLoadedPhotos(data.photos?.map((p: any) => p.url) ?? []);
   };
 
   const handleDelete = async (photoUrl: string) => {
@@ -125,7 +129,7 @@ const res = await fetch("https://upload-photo.jarvolf93.workers.dev/", {
     setDeleting(filename);
     try {
       const res = await fetch("https://delete-photo.jarvolf93.workers.dev/", {
-        method: "DELETE",
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password, filename }),
       });
