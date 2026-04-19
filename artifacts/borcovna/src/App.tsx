@@ -134,13 +134,13 @@ if (!telefon || telefon.replace(/\D/g, "").length < 9) {
             transition={{ duration: 0.3 }}
             className="w-full"
           >
-            {currentPhotos.length > 0 ? (
+          {currentPhotos.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
                 {currentPhotos.map((photo, i) => (
                   <div key={i} className="group relative overflow-hidden bg-muted aspect-square">
                     <img
                       src={photo}
-                      alt={`Furniture gallery ${i}`}
+                      alt={`${sections.find(s => s.id === activeSection)?.name} ${i + 1}`}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-500" />
@@ -148,8 +148,8 @@ if (!telefon || telefon.replace(/\D/g, "").length < 9) {
                 ))}
               </div>
             ) : (
-              <div className="w-full py-32 flex justify-center items-center">
-                <p className="text-muted-foreground tracking-widest uppercase text-sm">Fotky už jsou na cestě</p>
+              <div className="text-center text-white/50 py-12">
+                Žádné fotky v této galerii
               </div>
             )}
           </motion.div>

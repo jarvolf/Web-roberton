@@ -101,3 +101,28 @@ button.border-primary {
 [role="tablist"] button:hover {
   color: hsl(0, 100%, 50%) !important;
 }
+/* Fix pro upload page formulář */
+.min-h-screen.bg-background {
+  background-color: hsl(0, 0%, 4%) !important;
+}
+
+/* Zajisti viditelnost kontejneru s formulářem */
+.max-w-md {
+  background-color: transparent !important;
+}
+/* Fix pro Input a Textarea komponenty - VYŠŠÍ SPECIFICITA */
+input.bg-muted\/30,
+textarea.bg-muted\/30,
+[data-testid="input-jmeno"],
+[data-testid="input-telefon"],
+[data-testid="input-email"],
+[data-testid="input-dotaz"] {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+}
+
+input.bg-muted\/30::placeholder,
+textarea.bg-muted\/30::placeholder {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
