@@ -48,30 +48,43 @@ function Home() {
     });
   }, []);
 
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const telefon = formData.telefon.replace(/\s/g, "");
-if (!telefon || telefon.replace(/\D/g, "").length < 9) {
-  alert("Zadejte prosím platné telefonní číslo (min. 9 číslic).");
-  return;
-}
+    
+    // Validace telefonu
+    const phoneDigits = formData.telefon.replace(/\D/g, '');
+    if (phoneDigits.length < 9) {
+      alert('Vyplňte nejprve telefonní číslo (minimálně 9 číslic)');
+      return;
+    }
+
     setFormStatus("sending");
+
     try {
       const res = await fetch("https://contact-form.jarvolf93.workers.dev/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, telefon }),
+        body: JSON.stringify({
+          name: formData.jmeno,
+          phone: formData.telefon,
+          email: formData.email,
+          message: formData.dotaz,
+        }),
       });
+
       if (res.ok) {
         setFormStatus("sent");
         setFormData({ jmeno: "", telefon: "", email: "", dotaz: "" });
       } else {
-        setFormStatus("error");
+        const data = await res.json();
+        alert(data.error ?? "Chyba při odesílání");
+        setFormStatus("idle");
       }
-    } catch {
-      setFormStatus("error");
+    } catch (err) {
+      alert("Chyba: " + err);
+      setFormStatus("idle");
     }
-  }, [formData]);
+  };
 
   const currentPhotos = photos[activeSection] ?? [];
 
@@ -161,38 +174,46 @@ if (!telefon || telefon.replace(/\D/g, "").length < 9) {
           <img src={logoSingle} alt="Borcovna panáček" className="w-10 h-10 md:w-12 md:h-12 object-contain brightness-110 contrast-125 sm:scale-x-[-1]" />
         </div>
         <a
-          href="mailto:borcovna@roberton.cz"
-          data-testid="link-email"
-          className="text-white hover:text-primary transition-colors tracking-widest text-[10px] md:text-sm text-center truncate"
-        >
-          borcovna@roberton.cz
-        </a>
-        <a
-          href="tel:+420606836630"
-          data-testid="link-phone"
-          className="flex items-center gap-1 md:gap-2 text-white hover:text-primary transition-colors tracking-widest text-[10px] md:text-sm text-center truncate"
-        >
-          <Phone size={12} className="md:w-[14px] md:h-[14px]" strokeWidth={1.5} />
-          606 836 630
-        </a>
+     <div className="flex items-center justify-end flex-1 min-w-0">
+          <img src={logoSingle} alt="Borcovna panáček" className="w-10 h-10 md:w-12 md:h-12 object-contain brightness-110 contrast-125 sm:scale-x-[-1]" />
+        </div>
+        <div className="flex flex-col items-center gap-2">
+          
+            href="mailto:borcovna@roberton.cz"
+            data-testid="link-email"
+            className="text-white hover:text-primary transition-colors tracking-widest text-base md:text-xl text-center"
+          >
+            borcovna@roberton.cz
+          </a>
+          
+            href="tel:+420606836630"
+            data-testid="link-phone"
+            className="flex items-center gap-2 text-white hover:text-primary transition-colors tracking-widest text-base md:text-xl text-center"
+          >
+            <Phone size={18} className="md:w-[22px] md:h-[22px]" strokeWidth={1.5} />
+            606 836 630
+          </a>
+        </div>
         <div className="flex items-center justify-start flex-1 min-w-0">
           <img src={logoSingle} alt="Borcovna panáček" className="w-10 h-10 md:w-12 md:h-12 object-contain brightness-110 contrast-125" />
         </div>
       </footer>
 
       <button
-        onClick={() => { setIsContactOpen(true); setFormStatus("idle"); }}
-        data-testid="button-contact-open"
-        className="fixed bottom-20 md:bottom-24 right-6 z-50 flex items-center gap-2 bg-primary text-primary-foreground px-4 py-3 rounded-full shadow-xl hover:brightness-110 active:scale-95 transition-all duration-200"
-      >
-        <MessageSquare size={18} strokeWidth={1.5} />
-        <span className="text-sm font-semibold tracking-widest uppercase hidden sm:block">Napište nám</span>
-      </button>
+  onClick={() => setIsContactOpen(true)}
+  className="fixed right-6 bottom-6 z-40 px-6 py-3 bg-primary text-primary-foreground border-2 border-primary hover:brightness-110 transition-all duration-200 flex items-center gap-3"
+  data-testid="button-contact-open"
+>
+  <MessageSquare className="w-5 h-5" />
+  <span className="hidden md:inline text-sm uppercase tracking-widest font-semibold">
+    Napište nám
+  </span>
+</button>
 
       <Sheet open={isContactOpen} onOpenChange={setIsContactOpen}>
         <SheetContent
           side={isMobile ? "bottom" : "right"}
-          className="bg-background border-border/30 flex flex-col gap-6 max-h-[92dvh] overflow-y-auto"
+          className="bg-black border-border/30 flex flex-col gap-6 max-h-[92dvh] overflow-y-auto"
         >
           <SheetHeader className="text-left">
             <SheetTitle className="text-white text-base font-bold tracking-widest uppercase">
