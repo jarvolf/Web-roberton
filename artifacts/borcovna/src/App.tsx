@@ -4,7 +4,7 @@ import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import NotFound from "@/pages/not-found";
@@ -48,7 +48,7 @@ function Home() {
     });
   }, []);
 
-   const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validace telefonu
@@ -147,13 +147,13 @@ function Home() {
             transition={{ duration: 0.3 }}
             className="w-full"
           >
-          {currentPhotos.length > 0 ? (
+            {currentPhotos.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
                 {currentPhotos.map((photo, i) => (
                   <div key={i} className="group relative overflow-hidden bg-muted aspect-square">
                     <img
                       src={photo}
-                      alt={`${sections.find(s => s.id === activeSection)?.name} ${i + 1}`}
+                      alt={`${sections.find(s => s.id === activeSection)?.label} ${i + 1}`}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-500" />
@@ -173,19 +173,15 @@ function Home() {
         <div className="flex items-center justify-end flex-1 min-w-0">
           <img src={logoSingle} alt="Borcovna panáček" className="w-10 h-10 md:w-12 md:h-12 object-contain brightness-110 contrast-125 sm:scale-x-[-1]" />
         </div>
-        <a
-     <div className="flex items-center justify-end flex-1 min-w-0">
-          <img src={logoSingle} alt="Borcovna panáček" className="w-10 h-10 md:w-12 md:h-12 object-contain brightness-110 contrast-125 sm:scale-x-[-1]" />
-        </div>
         <div className="flex flex-col items-center gap-2">
-          
+          <a
             href="mailto:borcovna@roberton.cz"
             data-testid="link-email"
             className="text-white hover:text-primary transition-colors tracking-widest text-base md:text-xl text-center"
           >
             borcovna@roberton.cz
           </a>
-          
+          <a
             href="tel:+420606836630"
             data-testid="link-phone"
             className="flex items-center gap-2 text-white hover:text-primary transition-colors tracking-widest text-base md:text-xl text-center"
@@ -200,83 +196,85 @@ function Home() {
       </footer>
 
       <button
-  onClick={() => setIsContactOpen(true)}
-  className="fixed right-6 bottom-6 z-40 px-6 py-3 bg-primary text-primary-foreground border-2 border-primary hover:brightness-110 transition-all duration-200 flex items-center gap-3"
-  data-testid="button-contact-open"
->
-  <MessageSquare className="w-5 h-5" />
-  <span className="hidden md:inline text-sm uppercase tracking-widest font-semibold">
-    Napište nám
-  </span>
-</button>
+        onClick={() => setIsContactOpen(true)}
+        className="fixed right-6 bottom-16 md:bottom-6 z-40 px-6 py-2 md:py-3 rounded-lg hover:brightness-110 transition-all duration-200 flex items-center gap-3 shadow-lg"
+        style={{ backgroundColor: 'hsl(0, 100%, 50%)', color: 'white' }}
+        data-testid="button-contact-open"
+      >
+        <MessageSquare className="w-5 h-5" />
+        <span className="hidden md:inline text-sm uppercase tracking-widest font-semibold">
+          Napište nám
+        </span>
+      </button>
 
       <Sheet open={isContactOpen} onOpenChange={setIsContactOpen}>
         <SheetContent
           side={isMobile ? "bottom" : "right"}
-          className="bg-black border-border/30 flex flex-col gap-6 max-h-[92dvh] overflow-y-auto"
+          className="bg-black/95 border-border/30 flex flex-col items-center justify-center gap-6 max-h-[92dvh] overflow-y-auto w-full max-w-md mx-auto"
         >
-          <SheetHeader className="text-left">
-            <SheetTitle className="text-white text-base font-bold tracking-widest uppercase">
-              Napište nám
-            </SheetTitle>           
-          </SheetHeader>
+          <div className="w-full max-w-sm">
+            <SheetHeader className="text-left mb-6">
+              <SheetTitle className="text-white text-base font-bold tracking-widest uppercase">
+                Napište nám
+              </SheetTitle>           
+            </SheetHeader>
 
-          {formStatus === "sent" ? (
-            <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center py-12">
-              <p className="text-primary tracking-widest uppercase text-sm font-semibold">Zpráva odeslána!</p>
-              <p className="text-white text-xs">Ozveme se vám co nejdříve.</p>
-              <button
-                onClick={() => setFormStatus("idle")}
-                className="text-xs text-white hover:text-foreground underline mt-4 transition-colors"
-              >
-                Odeslat další dotaz
-              </button>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-white">
-              <Input
-                placeholder="Jméno"
-                value={formData.jmeno}
-                onChange={e => setFormData(p => ({ ...p, jmeno: e.target.value }))}
-                className="bg-muted/30 border-border/40 placeholder:text-white/50 text-white"
-                data-testid="input-jmeno"
-              />
-              <Input
-                placeholder="Telefon (povinný údaj)"
-                required
-                value={formData.telefon}
-                onChange={e => setFormData(p => ({ ...p, telefon: e.target.value }))}
-                className="bg-muted/30 border-border/40 placeholder:text-white/50 text-white"
-                data-testid="input-telefon"
-              />
-              <Input
-                placeholder="E-mail"
-                type="email"
-                value={formData.email}
-                onChange={e => setFormData(p => ({ ...p, email: e.target.value }))}
-                className="bg-muted/30 border-border/40 placeholder:text-white/50 text-white"
-                data-testid="input-email"
-              />
-              <Textarea
-                placeholder="Váš dotaz"
-                value={formData.dotaz}
-                onChange={e => setFormData(p => ({ ...p, dotaz: e.target.value }))}
-                className="bg-muted/30 border-border/40 placeholder:text-white/50 min-h-28 resize-none text-white"
-                data-testid="input-dotaz"
-              />
-              {formStatus === "error" && (
-                <p className="text-destructive text-xs">Nepodařilo se odeslat zprávu. Zkuste to prosím znovu.</p>
-              )}
-              <button
-                type="submit"
-                disabled={formStatus === "sending" || !formData.telefon.trim()}
-                data-testid="button-contact-submit"
-                className="mt-1 bg-primary text-primary-foreground px-6 py-3 text-sm uppercase tracking-widest font-semibold disabled:opacity-50 hover:brightness-110 active:scale-95 transition-all duration-200"
-              >
-                {formStatus === "sending" ? "Odesílám..." : "Odeslat"}
-              </button>
-            </form>
-          )}
+            {formStatus === "sent" ? (
+              <div className="flex flex-col items-center justify-center gap-4 text-center py-12">
+                <p className="text-primary tracking-widest uppercase text-sm font-semibold">Zpráva odeslána!</p>
+                <p className="text-white text-xs">Ozveme se vám co nejdříve.</p>
+                <button
+                  onClick={() => setFormStatus("idle")}
+                  className="text-xs text-white hover:text-foreground underline mt-4 transition-colors"
+                >
+                  Odeslat další dotaz
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4 text-white">
+                <Input
+                  placeholder="Jméno"
+                  value={formData.jmeno}
+                  onChange={e => setFormData(p => ({ ...p, jmeno: e.target.value }))}
+                  className="bg-muted/30 border-border/40 placeholder:text-white/50 text-white"
+                  data-testid="input-jmeno"
+                />
+                <Input
+                  placeholder="Telefon (povinný údaj)"
+                  value={formData.telefon}
+                  onChange={e => setFormData(p => ({ ...p, telefon: e.target.value }))}
+                  className="bg-muted/30 border-border/40 placeholder:text-white/50 text-white"
+                  data-testid="input-telefon"
+                />
+                <Input
+                  placeholder="E-mail"
+                  type="email"
+                  value={formData.email}
+                  onChange={e => setFormData(p => ({ ...p, email: e.target.value }))}
+                  className="bg-muted/30 border-border/40 placeholder:text-white/50 text-white"
+                  data-testid="input-email"
+                />
+                <Textarea
+                  placeholder="Váš dotaz"
+                  value={formData.dotaz}
+                  onChange={e => setFormData(p => ({ ...p, dotaz: e.target.value }))}
+                  className="bg-muted/30 border-border/40 placeholder:text-white/50 min-h-28 resize-none text-white"
+                  data-testid="input-dotaz"
+                />
+                {formStatus === "error" && (
+                  <p className="text-destructive text-xs">Nepodařilo se odeslat zprávu. Zkuste to prosím znovu.</p>
+                )}
+                <button
+                  type="submit"
+                  disabled={formStatus === "sending" || !formData.telefon.trim()}
+                  data-testid="button-contact-submit"
+                  className="mt-1 bg-primary text-primary-foreground px-6 py-3 text-sm uppercase tracking-widest font-semibold disabled:opacity-50 hover:brightness-110 active:scale-95 transition-all duration-200"
+                >
+                  {formStatus === "sending" ? "Odesílám..." : "Odeslat"}
+                </button>
+              </form>
+            )}
+          </div>
         </SheetContent>
       </Sheet>
     </div>
