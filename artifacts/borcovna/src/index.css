@@ -55,7 +55,7 @@ input[type="password"],
 input[type="number"],
 textarea,
 select {
-  background-color: rgba(255, 255, 255, 0.05) !important;
+  background-color: hsl(0, 0%, 10%) !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
   color: white !important;
 }
@@ -71,7 +71,7 @@ input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
   -webkit-text-fill-color: white !important;
-  -webkit-box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.05) inset !important;
+  -webkit-box-shadow: 0 0 0 1000px hsl(0, 0%, 10%) inset !important;
   transition: background-color 5000s ease-in-out 0s;
 }
 
@@ -117,7 +117,7 @@ textarea.bg-muted\/30,
 [data-testid="input-telefon"],
 [data-testid="input-email"],
 [data-testid="input-dotaz"] {
-  background-color: rgba(255, 255, 255, 0.05) !important;
+  background-color: hsl(0, 0%, 10%) !important;
   border-color: rgba(255, 255, 255, 0.2) !important;
   color: white !important;
 }
