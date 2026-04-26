@@ -288,7 +288,7 @@ function Home() {
 
       <button
         onClick={() => setIsContactOpen(true)}
-        className="fixed right-2 md:right-6 bottom-[5.5rem] md:bottom-6 z-40 px-3 py-2 md:px-6 md:py-3 rounded-lg hover:brightness-110 transition-all duration-200 flex items-start md:items-center gap-2 md:gap-3 shadow-lg text-left"
+        className="fixed right-2 md:right-6 bottom-[calc(112px+0.75rem)] md:bottom-[calc(132px+1rem)] z-40 px-3 py-2 md:px-6 md:py-3 rounded-lg hover:brightness-110 transition-all duration-200 flex items-start md:items-center gap-2 md:gap-3 shadow-lg text-left"
         style={{ backgroundColor: 'hsl(0, 100%, 50%)', color: 'white' }}
         data-testid="button-contact-open"
       >
