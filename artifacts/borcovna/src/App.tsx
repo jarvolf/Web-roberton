@@ -1,5 +1,5 @@
 import Upload from "@/pages/upload";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -48,7 +48,18 @@ function Home() {
   const [honeypot, setHoneypot] = useState("");
   const [formStatus, setFormStatus] = useState<FormStatus>("idle");
   const [formError, setFormError] = useState("");
+  /** URL fotek, které se nepodařilo načíst — úplně je skryjeme (žádný broken icon / rámeček). */
+  const [failedGalleryUrls, setFailedGalleryUrls] = useState<Set<string>>(() => new Set());
   const isMobile = useIsMobile();
+
+  const markGalleryPhotoFailed = useCallback((url: string) => {
+    setFailedGalleryUrls((prev) => {
+      if (prev.has(url)) return prev;
+      const next = new Set(prev);
+      next.add(url);
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     document.documentElement.classList.add("dark");
@@ -139,10 +150,14 @@ function Home() {
   };
 
   const currentPhotos = photos[activeSection] ?? [];
+  const visibleGalleryPhotos = useMemo(
+    () => currentPhotos.filter((url) => !failedGalleryUrls.has(url)),
+    [currentPhotos, failedGalleryUrls],
+  );
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center pb-32 md:pb-24">
-      <header className="w-full flex flex-col items-center pt-12 pb-4 px-6 gap-6">
+      <header className="w-full flex flex-col items-center pt-2 pb-4 px-6 gap-4 md:gap-6 md:pt-12">
         <div className="flex flex-col items-center gap-1">
           <h1 className="text-5xl md:text-7xl font-black tracking-tight text-white leading-none">
             ROBERTON.CZ
@@ -208,13 +223,16 @@ function Home() {
             transition={{ duration: 0.3 }}
             className="w-full"
           >
-            {currentPhotos.length > 0 ? (
+            {visibleGalleryPhotos.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-                {currentPhotos.map((photo, i) => (
-                  <div key={i} className="group relative overflow-hidden bg-muted aspect-square">
+                {visibleGalleryPhotos.map((photo) => (
+                  <div key={photo} className="group relative overflow-hidden bg-muted aspect-square">
                     <img
                       src={photo}
-                      alt={`${sections.find(s => s.id === activeSection)?.label} ${i + 1}`}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                      onError={() => markGalleryPhotoFailed(photo)}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-500" />
@@ -230,39 +248,55 @@ function Home() {
         </AnimatePresence>
       </main>
 
-      <footer className="fixed bottom-0 left-0 right-0 z-40 w-full bg-background/85 backdrop-blur-sm border-t border-border/50 py-3 md:py-4 flex items-center justify-center gap-2 md:gap-6 px-2 md:px-6">
-        <div className="flex items-center justify-end flex-1 min-w-0">
-          <img src={logoSingle} alt="Borcovna panáček" className="w-10 h-10 md:w-12 md:h-12 object-contain brightness-110 contrast-125 scale-x-[-1]" />
+      <footer className="fixed bottom-0 left-0 right-0 z-40 h-[112px] md:h-[132px] w-full bg-background/85 backdrop-blur-sm border-t border-border/50 flex items-stretch justify-center gap-2 md:gap-6 px-2 md:px-6">
+        <div className="flex h-full flex-1 min-w-0 items-stretch justify-end py-1 md:py-1.5">
+          <img
+            src={logoSingle}
+            alt="Borcovna panáček"
+            className="h-full max-h-full w-auto object-contain brightness-110 contrast-125 scale-x-[-1]"
+          />
         </div>
-        <div className="flex flex-col items-center gap-2">
+        <div className="flex h-full flex-col items-center justify-center gap-2 py-3 md:py-4 shrink-0">
           <a
             href="mailto:borcovna@roberton.cz"
             data-testid="link-email"
-            className="text-white hover:text-primary transition-colors tracking-widest text-base md:text-xl text-center"
+            className="text-white hover:text-primary transition-colors tracking-widest text-base md:text-xl text-center [paint-order:stroke_fill] [-webkit-text-stroke:1px_#000]"
           >
             borcovna@roberton.cz
           </a>
           <a
             href="tel:+420606836630"
             data-testid="link-phone"
-            className="flex items-center gap-2 text-white hover:text-primary transition-colors tracking-widest text-base md:text-xl text-center"
+            className="flex items-center gap-2 text-white hover:text-primary transition-colors tracking-widest text-base md:text-xl text-center [paint-order:stroke_fill] [-webkit-text-stroke:1px_#000]"
           >
-            <Phone size={18} className="md:w-[22px] md:h-[22px]" strokeWidth={1.5} />
+            <Phone
+              size={18}
+              className="shrink-0 drop-shadow-[0_0_1px_#000,0_0_1px_#000,1px_0_0_#000,-1px_0_0_#000,0_1px_0_#000,0_-1px_0_#000] md:w-[22px] md:h-[22px]"
+              strokeWidth={1.5}
+            />
             606 836 630
           </a>
         </div>
-        <div className="flex items-center justify-start flex-1 min-w-0">
-          <img src={logoSingle} alt="Borcovna panáček" className="w-10 h-10 md:w-12 md:h-12 object-contain brightness-110 contrast-125" />
+        <div className="flex h-full flex-1 min-w-0 items-stretch justify-start py-1 md:py-1.5">
+          <img
+            src={logoSingle}
+            alt="Borcovna panáček"
+            className="h-full max-h-full w-auto object-contain brightness-110 contrast-125"
+          />
         </div>
       </footer>
 
       <button
         onClick={() => setIsContactOpen(true)}
-        className="fixed right-2 md:right-6 bottom-[5.5rem] md:bottom-6 z-40 px-6 py-2 md:py-3 rounded-lg hover:brightness-110 transition-all duration-200 flex items-center gap-3 shadow-lg"
+        className="fixed right-2 md:right-6 bottom-[5.5rem] md:bottom-6 z-40 px-3 py-2 md:px-6 md:py-3 rounded-lg hover:brightness-110 transition-all duration-200 flex items-start md:items-center gap-2 md:gap-3 shadow-lg text-left"
         style={{ backgroundColor: 'hsl(0, 100%, 50%)', color: 'white' }}
         data-testid="button-contact-open"
       >
-        <MessageSquare className="w-5 h-5" />
+        <MessageSquare className="w-5 h-5 shrink-0" />
+        <span className="flex flex-col leading-tight md:hidden text-[10px] uppercase tracking-wide font-semibold">
+          <span>Napište</span>
+          <span>nám</span>
+        </span>
         <span className="hidden md:inline text-sm uppercase tracking-widest font-semibold">
           Napište nám
         </span>
@@ -271,7 +305,7 @@ function Home() {
       <Sheet open={isContactOpen} onOpenChange={setIsContactOpen}>
         <SheetContent
           side={isMobile ? "bottom" : "right"}
-          className="bg-black/95 border-border/30 flex flex-col items-center justify-center gap-6 max-h-[92dvh] overflow-y-auto w-full max-w-md mx-auto"
+          className="bg-black/95 border-border/30 flex flex-col items-center justify-center gap-6 max-h-[92dvh] overflow-y-auto w-full max-w-md mx-auto md:left-1/2 md:right-auto md:top-1/2 md:bottom-auto md:h-auto md:max-h-[90vh] md:w-[min(100vw-2rem,28rem)] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-lg md:border md:shadow-2xl"
         >
           <div className="w-full max-w-sm">
             <SheetHeader className="text-left mb-6">
