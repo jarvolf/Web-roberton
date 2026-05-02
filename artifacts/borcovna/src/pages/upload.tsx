@@ -1,12 +1,17 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 
 const GALLERIES = [
-  { id: "kuchyne", label: "Kuchyně" },
-  { id: "predsine", label: "Předsíně" },
-  { id: "detske", label: "Dětské pokoje" },
-  { id: "skrine", label: "Skříně" },
-  { id: "koupelny", label: "Koupelny" },
+  { id: "kuchyne", label: "Kuchyně", code: "KU" },
+  { id: "predsine", label: "Předsíně", code: "PR" },
+  { id: "detske", label: "Dětské pokoje", code: "DP" },
+  { id: "skrine", label: "Skříně", code: "SK" },
+  { id: "koupelny", label: "Koupelny", code: "KO" },
+  { id: "loznice", label: "Ložnice", code: "LO" },
+  { id: "obyvaci", label: "Obývací pokoje", code: "OP" },
+  { id: "recepce", label: "Recepce", code: "RE" },
+  { id: "satny", label: "Šatny", code: "SA" },
 ];
+const GALLERY_CODE_BY_ID = Object.fromEntries(GALLERIES.map((g) => [g.id, g.code])) as Record<string, string>;
 
 async function resizeImage(file: File, maxPx = 1920, quality = 0.82): Promise<Blob> {
   return new Promise((resolve, reject) => {
@@ -43,6 +48,17 @@ interface FileEntry {
 interface GalleryPhoto {
   key: string;
   url: string;
+  code?: string;
+}
+
+function inferPhotoCode(source: string | undefined, galleryId: string): string | undefined {
+  if (!source) return undefined;
+  const pref = GALLERY_CODE_BY_ID[galleryId];
+  if (!pref) return undefined;
+  const escapedPref = pref.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const re = new RegExp(`(${escapedPref}-\\d{1,6})`, "i");
+  const match = source.match(re);
+  return match?.[1]?.toUpperCase();
 }
 
 function photoFromApiItem(item: unknown): GalleryPhoto | null {
@@ -50,21 +66,31 @@ function photoFromApiItem(item: unknown): GalleryPhoto | null {
     try {
       const u = new URL(item);
       const key = decodeURIComponent(u.pathname.replace(/^\//, ""));
-      return key ? { key, url: item } : null;
+      return key ? { key, url: item, code: inferPhotoCode(key, key.split("/")[0] ?? "") } : null;
     } catch {
       return null;
     }
   }
   if (item && typeof item === "object") {
-    const o = item as { url?: unknown; key?: unknown };
+    const o = item as { url?: unknown; key?: unknown; code?: unknown; gallery?: unknown };
     if (typeof o.url !== "string" || !o.url.trim()) return null;
     if (typeof o.key === "string" && o.key.trim()) {
-      return { key: o.key.trim(), url: o.url.trim() };
+      const key = o.key.trim();
+      const galleryFromKey = key.split("/")[0] ?? "";
+      const code = typeof o.code === "string" && o.code.trim()
+        ? o.code.trim().toUpperCase()
+        : inferPhotoCode(key, typeof o.gallery === "string" ? o.gallery : galleryFromKey);
+      return { key, url: o.url.trim(), code };
     }
     try {
       const u = new URL(o.url.trim());
       const key = decodeURIComponent(u.pathname.replace(/^\//, ""));
-      return key ? { key, url: o.url.trim() } : null;
+      if (!key) return null;
+      const galleryFromKey = key.split("/")[0] ?? "";
+      const code = typeof o.code === "string" && o.code.trim()
+        ? o.code.trim().toUpperCase()
+        : inferPhotoCode(key, typeof o.gallery === "string" ? o.gallery : galleryFromKey);
+      return { key, url: o.url.trim(), code };
     } catch {
       return null;
     }
@@ -172,6 +198,7 @@ export default function Upload() {
           body: JSON.stringify({ 
             password, 
             gallery, 
+            galleryCode: GALLERY_CODE_BY_ID[gallery],
             filename, 
             contentType: "image/jpeg",
             fileData: base64Data 
@@ -328,6 +355,11 @@ export default function Upload() {
               {loadedPhotos.map((photo) => (
                 <div key={photo.key} className="relative group">
                   <img src={photo.url} alt={photo.key} className="w-full aspect-square object-cover" />
+                  {photo.code && (
+                    <div className="absolute top-2 left-2 bg-black/65 text-white px-2 py-1 text-xs tracking-wider font-semibold rounded-sm border border-white/20">
+                      {photo.code}
+                    </div>
+                  )}
                   <button
                     type="button"
                     onClick={() => handleDelete(photo)}

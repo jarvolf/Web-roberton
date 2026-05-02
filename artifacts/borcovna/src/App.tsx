@@ -1,5 +1,5 @@
 import Upload from "@/pages/upload";
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef } from "react";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -9,7 +9,21 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import NotFound from "@/pages/not-found";
 import { motion, AnimatePresence } from "framer-motion";
-import { CookingPot, DoorOpen, Baby, Package, Droplets, Phone, MessageSquare } from "lucide-react";
+import {
+  CookingPot,
+  DoorOpen,
+  Baby,
+  Package,
+  Droplets,
+  BedDouble,
+  Sofa,
+  ConciergeBell,
+  Shirt,
+  Phone,
+  MessageSquare,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 import logoGroup from "@assets/IMG-20260410-WA0002_1775846111566.jpg";
@@ -17,32 +31,74 @@ import logoSingle from "@assets/IMG-20260410-WA0001_1775846111605.jpg";
 
 const queryClient = new QueryClient();
 
+type Section = {
+  id: string;
+  label: string;
+  code: string;
+  icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string; style?: React.CSSProperties }>;
+};
+
 const sections = [
-  { id: "kuchyne", label: "Kuchyně", icon: CookingPot },
-  { id: "predsine", label: "Předsíně", icon: DoorOpen },
-  { id: "detske", label: "Dětské pokoje", icon: Baby },
-  { id: "skrine", label: "Skříně", icon: Package },
-  { id: "koupelny", label: "Koupelny", icon: Droplets },
-];
+  { id: "kuchyne", label: "Kuchyně", code: "KU", icon: CookingPot },
+  { id: "predsine", label: "Předsíně", code: "PR", icon: DoorOpen },
+  { id: "detske", label: "Dětské pokoje", code: "DP", icon: Baby },
+  { id: "skrine", label: "Skříně", code: "SK", icon: Package },
+  { id: "koupelny", label: "Koupelny", code: "KO", icon: Droplets },
+  { id: "loznice", label: "Ložnice", code: "LO", icon: BedDouble },
+  { id: "obyvaci", label: "Obývací pokoje", code: "OP", icon: Sofa },
+  { id: "recepce", label: "Recepce", code: "RE", icon: ConciergeBell },
+  { id: "satny", label: "Šatny", code: "SA", icon: Shirt },
+] satisfies Section[];
 
 type FormData = { jmeno: string; telefon: string; email: string; dotaz: string };
 type FormStatus = "idle" | "sending" | "sent" | "error";
 const CONTACT_FORM_ENDPOINT = import.meta.env.VITE_CONTACT_ENDPOINT ?? "https://contact-form.jarvolf93.workers.dev/";
 const GET_PHOTOS_ENDPOINT = import.meta.env.VITE_GET_PHOTOS_ENDPOINT ?? "https://get-photos.jarvolf93.workers.dev/";
 
-/** URL pro zobrazení — get-photos může vracet string nebo objekt { url, key }. */
-function photoUrlFromApiItem(item: unknown): string | null {
-  if (typeof item === "string" && item.trim()) return item.trim();
-  if (item && typeof item === "object" && typeof (item as { url?: unknown }).url === "string") {
-    const u = (item as { url: string }).url.trim();
-    return u || null;
+type GalleryPhoto = { url: string; key?: string; code?: string };
+const CODE_BY_GALLERY = Object.fromEntries(sections.map((s) => [s.id, s.code])) as Record<string, string>;
+
+function parseKeyFromUrl(url: string): string | undefined {
+  try {
+    return decodeURIComponent(new URL(url).pathname.replace(/^\//, ""));
+  } catch {
+    return undefined;
+  }
+}
+
+function inferPhotoCode(source: string | undefined, galleryId: string): string | undefined {
+  if (!source) return undefined;
+  const pref = CODE_BY_GALLERY[galleryId];
+  if (!pref) return undefined;
+  const escapedPref = pref.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const re = new RegExp(`(${escapedPref}-\\d{1,6})`, "i");
+  const match = source.match(re);
+  return match?.[1]?.toUpperCase();
+}
+
+/** Příprava pro variantu 2: get-photos může vracet url/key/code. */
+function photoFromApiItem(item: unknown, galleryId: string): GalleryPhoto | null {
+  if (typeof item === "string" && item.trim()) {
+    const url = item.trim();
+    const key = parseKeyFromUrl(url);
+    return { url, key, code: inferPhotoCode(key ?? url, galleryId) };
+  }
+  if (item && typeof item === "object") {
+    const o = item as { url?: unknown; key?: unknown; code?: unknown };
+    if (typeof o.url !== "string" || !o.url.trim()) return null;
+    const url = o.url.trim();
+    const key = typeof o.key === "string" && o.key.trim() ? o.key.trim() : parseKeyFromUrl(url);
+    const code = typeof o.code === "string" && o.code.trim()
+      ? o.code.trim().toUpperCase()
+      : inferPhotoCode(key ?? url, galleryId);
+    return { url, key, code };
   }
   return null;
 }
 
 function Home() {
   const [activeSection, setActiveSection] = useState(sections[0].id);
-  const [photos, setPhotos] = useState<Record<string, string[]>>({});
+  const [photos, setPhotos] = useState<Record<string, GalleryPhoto[]>>({});
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [formData, setFormData] = useState<FormData>({ jmeno: "", telefon: "", email: "", dotaz: "" });
   const [honeypot, setHoneypot] = useState("");
@@ -51,6 +107,77 @@ function Home() {
   /** URL fotek, které se nepodařilo načíst — úplně je skryjeme (žádný broken icon / rámeček). */
   const [failedGalleryUrls, setFailedGalleryUrls] = useState<Set<string>>(() => new Set());
   const isMobile = useIsMobile();
+  const mobileNavScrollRef = useRef<HTMLDivElement>(null);
+  const mobileNavLoopJumping = useRef(false);
+  const [mobileNavOverflow, setMobileNavOverflow] = useState(false);
+  const photoCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const lastViewedPhotoBySectionRef = useRef<Record<string, string>>({});
+
+  const mobileNavStrip = useMemo(
+    () =>
+      ([0, 1, 2] as const).flatMap((strip) =>
+        sections.map((section, indexInStrip) => ({
+          section,
+          stripKey: `${section.id}-${strip}-${indexInStrip}`,
+        })),
+      ),
+    [],
+  );
+
+  useLayoutEffect(() => {
+    const el = mobileNavScrollRef.current;
+    if (!el) return;
+
+    const updateOverflow = () => {
+      setMobileNavOverflow(el.scrollWidth > el.clientWidth + 2);
+    };
+
+    const centerOnce = () => {
+      const setW = el.scrollWidth / 3;
+      if (setW > 0) {
+        el.scrollLeft = setW;
+      }
+    };
+
+    updateOverflow();
+    centerOnce();
+    requestAnimationFrame(() => {
+      updateOverflow();
+      centerOnce();
+    });
+
+    const ro = new ResizeObserver(() => {
+      updateOverflow();
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const handleMobileNavScroll = useCallback(() => {
+    if (mobileNavLoopJumping.current) return;
+    const el = mobileNavScrollRef.current;
+    if (!el) return;
+    if (el.scrollWidth <= el.clientWidth + 4) return;
+    const setW = el.scrollWidth / 3;
+    if (setW <= 0) return;
+    const maxScrollLeft = el.scrollWidth - el.clientWidth;
+    const edgeTolerancePx = 2;
+
+    // Jakmile dorazíme na fyzický kraj, přeskočíme o jednu sadu.
+    if (el.scrollLeft <= edgeTolerancePx) {
+      mobileNavLoopJumping.current = true;
+      el.scrollLeft += setW;
+      requestAnimationFrame(() => {
+        mobileNavLoopJumping.current = false;
+      });
+    } else if (el.scrollLeft >= maxScrollLeft - edgeTolerancePx) {
+      mobileNavLoopJumping.current = true;
+      el.scrollLeft -= setW;
+      requestAnimationFrame(() => {
+        mobileNavLoopJumping.current = false;
+      });
+    }
+  }, []);
 
   const markGalleryPhotoFailed = useCallback((url: string) => {
     setFailedGalleryUrls((prev) => {
@@ -70,8 +197,8 @@ function Home() {
       const res = await fetch(`${GET_PHOTOS_ENDPOINT}?gallery=${encodeURIComponent(section.id)}`);
       const data = await res.json();
       const raw = Array.isArray(data?.photos) ? data.photos : [];
-      const urls = raw.map(photoUrlFromApiItem).filter((u): u is string => u !== null);
-      setPhotos(prev => ({ ...prev, [section.id]: urls }));
+      const preparedPhotos = raw.map((item) => photoFromApiItem(item, section.id)).filter((p): p is GalleryPhoto => p !== null);
+      setPhotos(prev => ({ ...prev, [section.id]: preparedPhotos }));
     });
   }, []);
 
@@ -151,9 +278,60 @@ function Home() {
 
   const currentPhotos = photos[activeSection] ?? [];
   const visibleGalleryPhotos = useMemo(
-    () => currentPhotos.filter((url) => !failedGalleryUrls.has(url)),
+    () => currentPhotos.filter((photo) => !failedGalleryUrls.has(photo.url)),
     [currentPhotos, failedGalleryUrls],
   );
+
+  const setPhotoCardRef = useCallback((url: string, el: HTMLDivElement | null) => {
+    photoCardRefs.current[url] = el;
+  }, []);
+
+  useEffect(() => {
+    if (visibleGalleryPhotos.length === 0) return;
+    const cards = visibleGalleryPhotos
+      .map((photo) => photoCardRefs.current[photo.url])
+      .filter((el): el is HTMLDivElement => !!el);
+    if (cards.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        let bestUrl: string | undefined;
+        let bestRatio = 0;
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          if (entry.intersectionRatio <= bestRatio) continue;
+          const url = (entry.target as HTMLElement).dataset.photoUrl;
+          if (!url) continue;
+          bestRatio = entry.intersectionRatio;
+          bestUrl = url;
+        }
+        if (bestUrl) {
+          lastViewedPhotoBySectionRef.current[activeSection] = bestUrl;
+        }
+      },
+      {
+        threshold: [0.2, 0.4, 0.6, 0.8],
+        // Střed viewportu dostává prioritu, ne úplný horní okraj.
+        rootMargin: "-18% 0px -34% 0px",
+      },
+    );
+
+    cards.forEach((card) => observer.observe(card));
+    return () => observer.disconnect();
+  }, [activeSection, visibleGalleryPhotos]);
+
+  useEffect(() => {
+    if (visibleGalleryPhotos.length === 0) return;
+    const rememberedUrl = lastViewedPhotoBySectionRef.current[activeSection];
+    if (!rememberedUrl) return;
+    if (!visibleGalleryPhotos.some((photo) => photo.url === rememberedUrl)) return;
+    const target = photoCardRefs.current[rememberedUrl];
+    if (!target) return;
+
+    requestAnimationFrame(() => {
+      target.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
+    });
+  }, [activeSection, visibleGalleryPhotos]);
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center pb-32 md:pb-24">
@@ -162,7 +340,7 @@ function Home() {
           <h1 className="text-5xl md:text-7xl font-black tracking-tight text-white leading-none">
             ROBERTON.CZ
           </h1>
-          <p className="text-xs md:text-sm tracking-[0.3em] uppercase text-white font-medium">
+          <p className="text-[14px] tracking-[0.3em] uppercase text-white font-medium">
             Truhlářská výroba na míru
           </p>
         </div>
@@ -175,42 +353,105 @@ function Home() {
         </div>
       </header>
 
-      <nav className="sticky top-0 z-50 w-full px-2 md:px-6 py-3 flex justify-between bg-background/50 backdrop-blur-sm border-b border-border/30">
-        {sections.map((section) => {
-          const isActive = activeSection === section.id;
-          const Icon = section.icon;
-          return (
-            <button
-              key={section.id}
-              onClick={() => setActiveSection(section.id)}
-              data-testid={`nav-${section.id}`}
-              className={`relative flex flex-col items-center gap-1.5 px-1.5 py-2 md:px-3 flex-1 transition-colors duration-300 ${
-                isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
-              }`}
-              style={isActive ? { color: "hsl(0, 100%, 50%)" } : undefined}
-            >
-              {isActive && (
-                <motion.div
-                  layoutId="activeTab"
-                  className="absolute inset-0 border border-primary opacity-50"
-                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                />
-              )}
-              <Icon
-                size={22}
-                strokeWidth={1.5}
-                className={`md:w-7 md:h-7 ${isActive ? "text-primary" : "text-muted-foreground"}`}
-                style={isActive ? { color: "hsl(0, 100%, 50%)" } : undefined}
+      <nav className="sticky top-0 z-50 w-full px-2 md:px-6 py-3 bg-background/50 backdrop-blur-sm border-b border-border/30">
+        {/* Mobilní řada: trojitá stopa + skok okrajů = nekonečné otáčení; rámeček aktivní vždy červený (ne theme primary). */}
+        <div className="relative md:hidden">
+          <div
+            ref={mobileNavScrollRef}
+            onScroll={handleMobileNavScroll}
+            className="flex w-full flex-nowrap items-stretch gap-2 overflow-x-auto overflow-y-hidden overscroll-x-contain px-3 py-2 [-webkit-overflow-scrolling:touch] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden snap-x snap-mandatory scroll-px-3 touch-pan-x"
+          >
+            {mobileNavStrip.map(({ section, stripKey }) => {
+              const isActive = activeSection === section.id;
+              const Icon = section.icon;
+              return (
+                <button
+                  key={stripKey}
+                  type="button"
+                  onClick={() => setActiveSection(section.id)}
+                  data-testid={`nav-${section.id}`}
+                  className={`relative shrink-0 snap-start snap-always box-border flex flex-col items-center justify-center gap-2 px-2 py-3 min-h-[86px] w-[30vw] min-w-[96px] max-w-[150px] transition-colors duration-300 outline-none focus:outline-none focus-visible:outline-none ring-0 focus-visible:ring-0 ${
+                    isActive
+                      ? "border-2 border-[hsl(0,100%,50%)] text-[hsl(0,100%,50%)]"
+                      : "border border-white/30 text-muted-foreground hover:text-foreground hover:border-white/50"
+                  }`}
+                >
+                  <Icon
+                    size={22}
+                    strokeWidth={1.5}
+                    className={`shrink-0 ${isActive ? "text-[hsl(0,100%,50%)]" : "text-muted-foreground"}`}
+                  />
+                  <span
+                    className={`text-[15px] uppercase tracking-wide font-semibold leading-tight text-center ${
+                      isActive ? "text-[hsl(0,100%,50%)]" : "text-muted-foreground"
+                    }`}
+                  >
+                    {section.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          {mobileNavOverflow && (
+            <>
+              <div
+                className="pointer-events-none absolute inset-y-0 left-0 w-12 bg-gradient-to-r from-background/95 to-transparent"
+                aria-hidden
               />
-              <span
-                className={`text-[10px] md:text-xs uppercase tracking-tight md:tracking-widest font-semibold transition-colors duration-300 leading-tight text-center ${isActive ? "!text-primary" : "text-muted-foreground"}`}
-                style={isActive ? { color: "hsl(0, 100%, 50%)" } : undefined}
+              <div
+                className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-background/95 to-transparent"
+                aria-hidden
+              />
+              <ChevronLeft
+                className="pointer-events-none absolute left-0.5 top-1/2 h-9 w-9 -translate-y-1/2 text-white/55 motion-safe:animate-pulse drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]"
+                strokeWidth={2.75}
+                aria-hidden
+              />
+              <ChevronRight
+                className="pointer-events-none absolute right-0.5 top-1/2 h-9 w-9 -translate-y-1/2 text-white/55 motion-safe:animate-pulse drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]"
+                strokeWidth={2.75}
+                aria-hidden
+              />
+            </>
+          )}
+        </div>
+        <div className="hidden md:flex w-full justify-between gap-2">
+          {sections.map((section) => {
+            const isActive = activeSection === section.id;
+            const Icon = section.icon;
+            return (
+              <button
+                key={section.id}
+                type="button"
+                onClick={() => setActiveSection(section.id)}
+                data-testid={`nav-${section.id}`}
+                className={`relative box-border flex flex-col items-center justify-center gap-2 px-2 py-3 flex-1 min-h-[92px] transition-colors duration-300 outline-none focus:outline-none focus-visible:outline-none ring-0 focus-visible:ring-0 ${
+                  isActive ? "text-[hsl(0,100%,50%)]" : "text-muted-foreground hover:text-foreground"
+                }`}
               >
-                {section.label}
-              </span>
-            </button>
-          );
-        })}
+                {isActive && (
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute inset-0 border-2 border-[hsl(0,100%,50%)] opacity-70"
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  />
+                )}
+                <Icon
+                  size={22}
+                  strokeWidth={1.5}
+                  className={`shrink-0 ${isActive ? "text-[hsl(0,100%,50%)]" : "text-muted-foreground"}`}
+                />
+                <span
+                  className={`text-[15px] md:text-lg uppercase tracking-wide font-semibold transition-colors duration-300 leading-tight text-center ${
+                    isActive ? "text-[hsl(0,100%,50%)]" : "text-muted-foreground"
+                  }`}
+                >
+                  {section.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </nav>
 
       <main className="w-full max-w-6xl px-6 pt-2 pb-24 flex-grow flex flex-col items-center">
@@ -226,16 +467,26 @@ function Home() {
             {visibleGalleryPhotos.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
                 {visibleGalleryPhotos.map((photo) => (
-                  <div key={photo} className="group relative overflow-hidden bg-muted aspect-square">
+                  <div
+                    key={photo.url}
+                    ref={(el) => setPhotoCardRef(photo.url, el)}
+                    data-photo-url={photo.url}
+                    className="group relative overflow-hidden bg-muted aspect-square"
+                  >
                     <img
-                      src={photo}
+                      src={photo.url}
                       alt=""
                       loading="lazy"
                       decoding="async"
-                      onError={() => markGalleryPhotoFailed(photo)}
+                      onError={() => markGalleryPhotoFailed(photo.url)}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-500" />
+                    {photo.code && (
+                      <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-sm text-white px-2 py-1 text-xs md:text-sm tracking-wider font-semibold rounded-sm border border-white/20">
+                        {photo.code}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -293,11 +544,11 @@ function Home() {
         data-testid="button-contact-open"
       >
         <MessageSquare className="w-5 h-5 shrink-0" />
-        <span className="flex flex-col leading-tight md:hidden text-[10px] uppercase tracking-wide font-semibold">
+        <span className="flex flex-col leading-tight md:hidden text-[15px] uppercase tracking-wide font-semibold">
           <span>Napište</span>
           <span>nám</span>
         </span>
-        <span className="hidden md:inline text-sm uppercase tracking-widest font-semibold">
+        <span className="hidden md:inline text-lg uppercase tracking-wide font-semibold">
           Napište nám
         </span>
       </button>
@@ -309,21 +560,21 @@ function Home() {
         >
           <div className="w-full max-w-sm">
             <SheetHeader className="text-left mb-6">
-              <SheetTitle className="text-white text-base font-bold tracking-widest uppercase">
+              <SheetTitle className="text-white text-[15px] md:text-lg font-bold tracking-wide uppercase">
                 Napište nám
               </SheetTitle>           
             </SheetHeader>
 
             {formStatus === "sent" ? (
               <div className="flex flex-col items-center justify-center gap-4 text-center py-12">
-                <p className="text-primary tracking-widest uppercase text-sm font-semibold">Zpráva odeslána!</p>
-                <p className="text-white text-xs">Ozveme se vám co nejdříve.</p>
+                <p className="text-primary tracking-wide uppercase text-[15px] md:text-lg font-semibold">Zpráva odeslána!</p>
+                <p className="text-white text-[15px] md:text-lg">Ozveme se vám co nejdříve.</p>
                 <button
                   onClick={() => {
                     setFormStatus("idle");
                     setFormError("");
                   }}
-                  className="text-xs text-white hover:text-foreground underline mt-4 transition-colors"
+                  className="text-[15px] md:text-lg text-white hover:text-foreground underline mt-4 transition-colors"
                 >
                   Odeslat další dotaz
                 </button>
@@ -343,14 +594,14 @@ function Home() {
                   placeholder="Jméno"
                   value={formData.jmeno}
                   onChange={e => setFormData(p => ({ ...p, jmeno: e.target.value }))}
-                  className="bg-muted/30 border-border/40 placeholder:text-white/50 text-white"
+                  className="bg-muted/30 border-border/40 placeholder:text-white/50 text-white text-[15px] md:text-lg"
                   data-testid="input-jmeno"
                 />
                 <Input
                   placeholder="Telefon (povinný údaj)"
                   value={formData.telefon}
                   onChange={e => setFormData(p => ({ ...p, telefon: e.target.value }))}
-                  className="bg-muted/30 border-border/40 placeholder:text-white/50 text-white"
+                  className="bg-muted/30 border-border/40 placeholder:text-white/50 text-white text-[15px] md:text-lg"
                   data-testid="input-telefon"
                 />
                 <Input
@@ -358,24 +609,24 @@ function Home() {
                   type="email"
                   value={formData.email}
                   onChange={e => setFormData(p => ({ ...p, email: e.target.value }))}
-                  className="bg-muted/30 border-border/40 placeholder:text-white/50 text-white"
+                  className="bg-muted/30 border-border/40 placeholder:text-white/50 text-white text-[15px] md:text-lg"
                   data-testid="input-email"
                 />
                 <Textarea
                   placeholder="Váš dotaz"
                   value={formData.dotaz}
                   onChange={e => setFormData(p => ({ ...p, dotaz: e.target.value }))}
-                  className="bg-muted/30 border-border/40 placeholder:text-white/50 min-h-28 resize-none text-white"
+                  className="bg-muted/30 border-border/40 placeholder:text-white/50 min-h-28 resize-none text-white text-[15px] md:text-lg"
                   data-testid="input-dotaz"
                 />
                 {formStatus === "error" && (
-                  <p className="text-red-500 text-sm">{formError || "Nepodařilo se odeslat zprávu. Zkuste to prosím znovu."}</p>
+                  <p className="text-red-500 text-[15px] md:text-lg">{formError || "Nepodařilo se odeslat zprávu. Zkuste to prosím znovu."}</p>
                 )}
                 <button
                   type="submit"
                   disabled={formStatus === "sending"}
                   data-testid="button-contact-submit"
-                  className="mt-1 bg-primary text-primary-foreground px-6 py-3 text-sm uppercase tracking-widest font-semibold disabled:opacity-50 hover:brightness-110 active:scale-95 transition-all duration-200"
+                  className="mt-1 bg-primary text-primary-foreground px-6 py-3 text-[15px] md:text-lg uppercase tracking-wide font-semibold disabled:opacity-50 hover:brightness-110 active:scale-95 transition-all duration-200"
                 >
                   {formStatus === "sending" ? "Odesílám..." : "Odeslat"}
                 </button>
