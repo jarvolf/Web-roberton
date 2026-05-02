@@ -112,6 +112,9 @@ function Home() {
   const [mobileNavOverflow, setMobileNavOverflow] = useState(false);
   const photoCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const lastViewedPhotoBySectionRef = useRef<Record<string, string>>({});
+  /** Výška bloku e-mail + telefon + tlačítko — panáčci mají max. tuto výšku (flex + img jinak roztahuje řádek). */
+  const footerContactRef = useRef<HTMLDivElement>(null);
+  const [footerBandPx, setFooterBandPx] = useState(0);
 
   const mobileNavStrip = useMemo(
     () =>
@@ -310,9 +313,8 @@ function Home() {
         }
       },
       {
-        threshold: [0.2, 0.4, 0.6, 0.8],
-        // Střed viewportu dostává prioritu, ne úplný horní okraj.
-        rootMargin: "-18% 0px -34% 0px",
+        threshold: [0, 0.05, 0.1, 0.2, 0.35, 0.5, 0.75, 1],
+        rootMargin: "0px 0px -10% 0px",
       },
     );
 
@@ -320,22 +322,60 @@ function Home() {
     return () => observer.disconnect();
   }, [activeSection, visibleGalleryPhotos]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (visibleGalleryPhotos.length === 0) return;
     const rememberedUrl = lastViewedPhotoBySectionRef.current[activeSection];
     if (!rememberedUrl) return;
     if (!visibleGalleryPhotos.some((photo) => photo.url === rememberedUrl)) return;
-    const target = photoCardRefs.current[rememberedUrl];
-    if (!target) return;
 
-    requestAnimationFrame(() => {
-      target.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
-    });
+    let cancelled = false;
+    let tries = 0;
+    const tryScroll = () => {
+      if (cancelled) return;
+      tries += 1;
+      const target = photoCardRefs.current[rememberedUrl];
+      if (target) {
+        target.scrollIntoView({ block: "start", inline: "nearest", behavior: "auto" });
+        return;
+      }
+      if (tries < 12) {
+        requestAnimationFrame(tryScroll);
+      }
+    };
+    requestAnimationFrame(tryScroll);
+    return () => {
+      cancelled = true;
+    };
   }, [activeSection, visibleGalleryPhotos]);
 
+  useLayoutEffect(() => {
+    const el = footerContactRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const apply = () => {
+      requestAnimationFrame(() => {
+        const h = el.getBoundingClientRect().height;
+        if (h > 0) setFooterBandPx(Math.round(h * 100) / 100);
+      });
+    };
+    apply();
+    const ro = new ResizeObserver(apply);
+    ro.observe(el);
+    window.addEventListener("resize", apply);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", apply);
+    };
+  }, []);
+
+  /** Jen `max-height` bez výšky rodiče rozbije `%` u `<img>` → přetékání a ořez při `overflow-hidden`. */
+  const footerMascotBoxStyle: React.CSSProperties | undefined =
+    footerBandPx > 0
+      ? { height: `${footerBandPx}px`, boxSizing: "border-box", flexShrink: 0 }
+      : undefined;
+
   return (
-    <div className="min-h-screen w-full flex flex-col items-center pb-32 md:pb-24">
-      <header className="w-full flex flex-col items-center pt-2 pb-4 px-6 gap-4 md:gap-6 md:pt-12">
+    <div className="min-h-screen w-full flex flex-col items-center pb-28 md:pb-24">
+      <header className="w-full flex flex-col items-center bg-transparent pt-2 pb-4 px-6 gap-4 md:gap-6 md:pt-12">
         <div className="flex flex-col items-center gap-1">
           <h1 className="text-5xl md:text-7xl font-black tracking-tight text-white leading-none">
             ROBERTON.CZ
@@ -353,7 +393,7 @@ function Home() {
         </div>
       </header>
 
-      <nav className="sticky top-0 z-50 w-full px-2 md:px-6 py-3 bg-background/50 backdrop-blur-sm border-b border-border/30">
+      <nav className="sticky top-0 z-50 w-full border-b border-white/15 bg-transparent px-2 py-3 md:px-6">
         {/* Mobilní řada: trojitá stopa + skok okrajů = nekonečné otáčení; rámeček aktivní vždy červený (ne theme primary). */}
         <div className="relative md:hidden">
           <div
@@ -379,10 +419,12 @@ function Home() {
                   <Icon
                     size={22}
                     strokeWidth={1.5}
-                    className={`shrink-0 ${isActive ? "text-[hsl(0,100%,50%)]" : "text-muted-foreground"}`}
+                    className={`shrink-0 drop-shadow-[0_0_1px_#000,0_0_1px_#000,1px_0_0_#000,-1px_0_0_#000,0_1px_0_#000,0_-1px_0_#000] ${
+                      isActive ? "text-[hsl(0,100%,50%)]" : "text-muted-foreground"
+                    }`}
                   />
                   <span
-                    className={`text-[15px] uppercase tracking-wide font-semibold leading-tight text-center ${
+                    className={`text-[15px] uppercase tracking-wide font-semibold leading-tight text-center [paint-order:stroke_fill] [-webkit-text-stroke:1px_#000] ${
                       isActive ? "text-[hsl(0,100%,50%)]" : "text-muted-foreground"
                     }`}
                   >
@@ -395,11 +437,11 @@ function Home() {
           {mobileNavOverflow && (
             <>
               <div
-                className="pointer-events-none absolute inset-y-0 left-0 w-12 bg-gradient-to-r from-background/95 to-transparent"
+                className="pointer-events-none absolute inset-y-0 left-0 w-12 bg-gradient-to-r from-black/55 to-transparent"
                 aria-hidden
               />
               <div
-                className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-background/95 to-transparent"
+                className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-black/55 to-transparent"
                 aria-hidden
               />
               <ChevronLeft
@@ -439,10 +481,12 @@ function Home() {
                 <Icon
                   size={22}
                   strokeWidth={1.5}
-                  className={`shrink-0 ${isActive ? "text-[hsl(0,100%,50%)]" : "text-muted-foreground"}`}
+                  className={`shrink-0 drop-shadow-[0_0_1px_#000,0_0_1px_#000,1px_0_0_#000,-1px_0_0_#000,0_1px_0_#000,0_-1px_0_#000] ${
+                    isActive ? "text-[hsl(0,100%,50%)]" : "text-muted-foreground"
+                  }`}
                 />
                 <span
-                  className={`text-[15px] md:text-lg uppercase tracking-wide font-semibold transition-colors duration-300 leading-tight text-center ${
+                  className={`text-[15px] md:text-lg uppercase tracking-wide font-semibold transition-colors duration-300 leading-tight text-center [paint-order:stroke_fill] [-webkit-text-stroke:1px_#000] ${
                     isActive ? "text-[hsl(0,100%,50%)]" : "text-muted-foreground"
                   }`}
                 >
@@ -466,29 +510,40 @@ function Home() {
           >
             {visibleGalleryPhotos.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-                {visibleGalleryPhotos.map((photo) => (
+                {visibleGalleryPhotos.map((photo, visibleIndex) => {
+                  const orderIndex = currentPhotos.findIndex((p) => p.url === photo.url);
+                  const n = Math.min(
+                    orderIndex >= 0 ? orderIndex + 1 : visibleIndex + 1,
+                    999,
+                  );
+                  const cat = CODE_BY_GALLERY[activeSection] ?? "XX";
+                  const photoLabel = `${cat}-${n}`;
+                  return (
                   <div
                     key={photo.url}
                     ref={(el) => setPhotoCardRef(photo.url, el)}
                     data-photo-url={photo.url}
-                    className="group relative overflow-hidden bg-muted aspect-square"
+                    className="flex flex-col gap-0 scroll-mt-28 md:scroll-mt-32"
                   >
-                    <img
-                      src={photo.url}
-                      alt=""
-                      loading="lazy"
-                      decoding="async"
-                      onError={() => markGalleryPhotoFailed(photo.url)}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-500" />
-                    {photo.code && (
-                      <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-sm text-white px-2 py-1 text-xs md:text-sm tracking-wider font-semibold rounded-sm border border-white/20">
-                        {photo.code}
-                      </div>
-                    )}
+                    <div className="group relative aspect-square w-full overflow-hidden rounded-t-sm rounded-b-none bg-muted">
+                      <img
+                        src={photo.url}
+                        alt=""
+                        loading="lazy"
+                        decoding="async"
+                        onError={() => markGalleryPhotoFailed(photo.url)}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-500" />
+                    </div>
+                    <div className="flex justify-center md:justify-start -mt-px px-0">
+                      <span className="inline-flex min-w-[2.25rem] items-center justify-center rounded-b-sm rounded-t-none border border-t-0 border-white/25 bg-black/70 px-2 py-1 text-xs md:text-sm font-semibold tabular-nums tracking-wide text-white">
+                        {photoLabel}
+                      </span>
+                    </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center text-white/50 py-12">
@@ -499,59 +554,72 @@ function Home() {
         </AnimatePresence>
       </main>
 
-      <footer className="fixed bottom-0 left-0 right-0 z-40 h-[112px] md:h-[132px] w-full bg-background/85 backdrop-blur-sm border-t border-border/50 flex items-stretch justify-center gap-2 md:gap-6 px-2 md:px-6">
-        <div className="flex h-full flex-1 min-w-0 items-stretch justify-end py-1 md:py-1.5">
-          <img
-            src={logoSingle}
-            alt="Borcovna panáček"
-            className="h-full max-h-full w-auto object-contain brightness-110 contrast-125 scale-x-[-1]"
-          />
-        </div>
-        <div className="flex h-full flex-col items-center justify-center gap-2 py-3 md:py-4 shrink-0">
-          <a
-            href="mailto:borcovna@roberton.cz"
-            data-testid="link-email"
-            className="text-white hover:text-primary transition-colors tracking-widest text-base md:text-xl text-center [paint-order:stroke_fill] [-webkit-text-stroke:1px_#000]"
+      <footer className="fixed bottom-0 left-0 right-0 z-40 w-full border-t border-white/15 bg-transparent px-2 py-1 md:px-6 md:py-1">
+        <div className="mx-auto flex w-full max-w-4xl items-center justify-center gap-2 md:gap-3">
+          <div
+            className="flex min-h-0 shrink-0 items-center justify-center overflow-hidden rounded-md bg-black p-0.5 shadow-[0_2px_8px_rgba(0,0,0,0.4)] md:rounded-lg md:p-1 max-w-[min(30vw,7.5rem)] md:max-w-[8.5rem]"
+            style={footerMascotBoxStyle}
           >
-            borcovna@roberton.cz
-          </a>
-          <a
-            href="tel:+420606836630"
-            data-testid="link-phone"
-            className="flex items-center gap-2 text-white hover:text-primary transition-colors tracking-widest text-base md:text-xl text-center [paint-order:stroke_fill] [-webkit-text-stroke:1px_#000]"
-          >
-            <Phone
-              size={18}
-              className="shrink-0 drop-shadow-[0_0_1px_#000,0_0_1px_#000,1px_0_0_#000,-1px_0_0_#000,0_1px_0_#000,0_-1px_0_#000] md:w-[22px] md:h-[22px]"
-              strokeWidth={1.5}
+            <img
+              src={logoSingle}
+              alt="Borcovna panáček"
+              className={
+                footerBandPx > 0
+                  ? "h-full w-full max-h-full max-w-full min-h-0 min-w-0 object-contain brightness-110 contrast-125 scale-x-[-1]"
+                  : "h-auto max-h-32 w-auto max-w-full object-contain brightness-110 contrast-125 scale-x-[-1] md:max-h-36"
+              }
             />
-            606 836 630
-          </a>
-        </div>
-        <div className="flex h-full flex-1 min-w-0 items-stretch justify-start py-1 md:py-1.5">
-          <img
-            src={logoSingle}
-            alt="Borcovna panáček"
-            className="h-full max-h-full w-auto object-contain brightness-110 contrast-125"
-          />
+          </div>
+          <div
+            ref={footerContactRef}
+            className="flex min-h-0 min-w-0 flex-1 flex-col items-center justify-start gap-0.5 text-center leading-tight"
+          >
+            <a
+              href="mailto:borcovna@roberton.cz"
+              data-testid="link-email"
+              className="w-full text-white hover:text-primary transition-colors tracking-widest text-xs md:text-base [paint-order:stroke_fill] [-webkit-text-stroke:1px_#000]"
+            >
+              borcovna@roberton.cz
+            </a>
+            <a
+              href="tel:+420606836630"
+              data-testid="link-phone"
+              className="flex w-full items-center justify-center gap-1.5 text-white hover:text-primary transition-colors tracking-widest text-xs md:text-base [paint-order:stroke_fill] [-webkit-text-stroke:1px_#000]"
+            >
+              <Phone
+                size={16}
+                className="shrink-0 drop-shadow-[0_0_1px_#000,0_0_1px_#000,1px_0_0_#000,-1px_0_0_#000,0_1px_0_#000,0_-1px_0_#000] md:h-[18px] md:w-[18px]"
+                strokeWidth={1.5}
+              />
+              606 836 630
+            </a>
+            <button
+              type="button"
+              onClick={() => setIsContactOpen(true)}
+              className="mt-0.5 flex w-full min-w-0 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-bold uppercase tracking-wide text-white shadow-md transition-all hover:brightness-110 active:scale-[0.99] md:rounded-lg md:py-2 md:text-sm"
+              style={{ backgroundColor: "hsl(0, 100%, 50%)" }}
+              data-testid="button-contact-open"
+            >
+              <MessageSquare className="h-4 w-4 shrink-0 md:h-5 md:w-5" strokeWidth={2.25} />
+              Napište nám
+            </button>
+          </div>
+          <div
+            className="flex min-h-0 shrink-0 items-center justify-center overflow-hidden rounded-md bg-black p-0.5 shadow-[0_2px_8px_rgba(0,0,0,0.4)] md:rounded-lg md:p-1 max-w-[min(30vw,7.5rem)] md:max-w-[8.5rem]"
+            style={footerMascotBoxStyle}
+          >
+            <img
+              src={logoSingle}
+              alt="Borcovna panáček"
+              className={
+                footerBandPx > 0
+                  ? "max-h-full max-w-full min-h-0 min-w-0 h-auto w-auto object-contain brightness-110 contrast-125"
+                  : "h-auto max-h-32 w-auto max-w-full object-contain brightness-110 contrast-125 md:max-h-36"
+              }
+            />
+          </div>
         </div>
       </footer>
-
-      <button
-        onClick={() => setIsContactOpen(true)}
-        className="fixed right-2 md:right-6 bottom-[calc(112px+0.75rem)] md:bottom-[calc(132px+1rem)] z-40 px-3 py-2 md:px-6 md:py-3 rounded-lg hover:brightness-110 transition-all duration-200 flex items-start md:items-center gap-2 md:gap-3 shadow-lg text-left"
-        style={{ backgroundColor: 'hsl(0, 100%, 50%)', color: 'white' }}
-        data-testid="button-contact-open"
-      >
-        <MessageSquare className="w-5 h-5 shrink-0" />
-        <span className="flex flex-col leading-tight md:hidden text-[15px] uppercase tracking-wide font-semibold">
-          <span>Napište</span>
-          <span>nám</span>
-        </span>
-        <span className="hidden md:inline text-lg uppercase tracking-wide font-semibold">
-          Napište nám
-        </span>
-      </button>
 
       <Sheet open={isContactOpen} onOpenChange={setIsContactOpen}>
         <SheetContent

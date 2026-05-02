@@ -128,7 +128,13 @@ Společné pro fotky (podle tvých poznámek):
 - **`IMAGES_BASE_URL`** — základ URL pro veřejné odkazy na obrázky (např. `https://images.roberton.cz`).
 - U **contact-form** workeru navíc typicky **API klíč Resend** a v kódu workeru nastavený **příjemce** (Borcovna) a **ověřená odesílací doména** v Resend — bez toho Resend zprávu nepřijme nebo spadne na 401/403.
 
-**Galerie** mají v kódu webu i ve workerech **stejné identifikátory**: `kuchyne`, `predsine`, `detske`, `skrine`, `koupelny`. Přidáš-li novou sekci, musíš ji přidat **na třech místech**: `App.tsx` (`sections`), `upload.tsx` (`GALLERIES`) a **allowlist ve všech příslušných workerech**.
+**Galerie** mají v kódu webu i ve workerech **stejné identifikátory** (např. `kuchyne`, `predsine`, … včetně novějších jako `loznice`, `obyvaci`, `recepce`, `satny`). Přidáš-li novou sekci, musíš ji přidat **na třech místech**: `App.tsx` (`sections`), `upload.tsx` (`GALLERIES`) a **allowlist ve všech příslušných workerech**.
+
+### Kódy u fotek (co znamenají a kdy přijdou z API)
+
+- Na webu se u každé fotky zobrazí **identifikátor odvozený z klíče v R2** (typicky `KU-1735123456789` z klíče `kuchyne/1735123456789-nazev.jpg`), pokud worker ještě neposílá pole `code`.
+- **Varianta 2 (doporučená):** upload worker při uložení přidělí stabilní kód (např. `KU-104`) a **get-photos** ho vrátí v JSON (`code`). Pak se na webu zobrazí přesně toto číslo — vhodné pro telefonické poptávky.
+- **Existující fotky:** nemusíš je kvůli číslu hromadně mazat a nahrávat znovu; do doby úpravy workeru stačí odvozený kód z času v názvu souboru. Po nasazení workeru s `code` se začnou ukazovat „pravá“ čísla u nově nahraných (a případně po migraci i u starých).
 
 ---
 
@@ -138,7 +144,7 @@ Společné pro fotky (podle tvých poznámek):
 
 1. Po načtení stránky `App.tsx` pro každou sekci zavolá **GET** na get-photos worker s `gallery=…`.
 2. Worker vypíše objekty v R2 s prefixem `kuchyne/` atd. a vrátí veřejné **URL**.
-3. React vykreslí `<img src="…">`. Když se obrázek nenačte, URL se uloží do množiny chyb a skryje se (žádný rozbitý rámeček).
+3. React vykreslí mřížku fotek a pod každou fotkou **štítek s kódem** (viz výše). Při přepnutí galerie a návratu se stránka posune k **naposledy prohlížené** fotce (jen v rámci relace v prohlížeči). Když se obrázek nenačte, URL se uloží do množiny chyb a položka se skryje.
 
 ### Kontaktní formulář („Napište nám“)
 

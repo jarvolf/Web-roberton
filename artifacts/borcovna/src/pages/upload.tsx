@@ -66,7 +66,8 @@ function photoFromApiItem(item: unknown): GalleryPhoto | null {
     try {
       const u = new URL(item);
       const key = decodeURIComponent(u.pathname.replace(/^\//, ""));
-      return key ? { key, url: item, code: inferPhotoCode(key, key.split("/")[0] ?? "") } : null;
+      const gid = key.split("/")[0] ?? "";
+      return key ? { key, url: item, code: inferPhotoCode(key, gid) } : null;
     } catch {
       return null;
     }
@@ -159,7 +160,11 @@ export default function Upload() {
   };
 
   const handleUpload = async () => {
-    if (!password || files.length === 0) return;
+    if (files.length === 0) return;
+    if (!password.trim()) {
+      setPageMessage("Zadej heslo");
+      return;
+    }
     setPageMessage("");
     setRunning(true);
     let successCount = 0;
@@ -291,7 +296,10 @@ export default function Upload() {
             type={showPassword ? "text" : "password"}
             placeholder="Heslo"
             value={password}
-            onChange={e => setPassword(e.target.value)}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              setPageMessage((m) => (m === "Zadej heslo" ? "" : m));
+            }}
             className="w-full bg-muted/30 border border-border/40 px-4 py-3 text-white placeholder:text-white/50 outline-none pr-12"
           />
           <button
@@ -341,7 +349,7 @@ export default function Upload() {
 
         <button
           onClick={handleUpload}
-          disabled={running || !password || files.length === 0}
+          disabled={running || files.length === 0}
           className="bg-primary text-primary-foreground px-6 py-3 text-sm uppercase tracking-widest font-semibold disabled:opacity-50 hover:brightness-110 active:scale-95 transition-all duration-200"
         >
           {running ? "Nahrávám..." : "Nahrát"}
@@ -352,14 +360,14 @@ export default function Upload() {
           <div className="mt-8 w-full">
             <h2 className="text-lg font-bold tracking-widest uppercase mb-4">Fotky v galerii</h2>
             <div className="grid grid-cols-2 gap-4">
-              {loadedPhotos.map((photo) => (
-                <div key={photo.key} className="relative group">
-                  <img src={photo.url} alt={photo.key} className="w-full aspect-square object-cover" />
-                  {photo.code && (
-                    <div className="absolute top-2 left-2 bg-black/65 text-white px-2 py-1 text-xs tracking-wider font-semibold rounded-sm border border-white/20">
-                      {photo.code}
-                    </div>
-                  )}
+              {loadedPhotos.map((photo, photoIndex) => (
+                <div key={photo.key} className="relative group flex flex-col gap-2">
+                  <img src={photo.url} alt={photo.key} className="w-full aspect-square object-cover rounded-sm" />
+                  <div className="flex justify-center">
+                    <span className="inline-flex items-center rounded-sm border border-white/25 bg-black/70 px-2 py-1 text-xs font-semibold tracking-wide text-white tabular-nums">
+                      {`${GALLERY_CODE_BY_ID[gallery] ?? "XX"}-${Math.min(photoIndex + 1, 999)}`}
+                    </span>
+                  </div>
                   <button
                     type="button"
                     onClick={() => handleDelete(photo)}
