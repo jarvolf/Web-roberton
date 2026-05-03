@@ -13,7 +13,18 @@ const s3 = new S3Client({
 
 const UPLOAD_PASSWORD = process.env.UPLOAD_PASSWORD!;
 
-const ALLOWED_GALLERIES = ["kuchyne", "predsine", "detske", "skrine", "koupelny"];
+/** Musí odpovídat `GALLERIES` v `src/pages/upload.tsx` / `sections` v `App.tsx` + allowlistu na workeru upload-photo. */
+const ALLOWED_GALLERIES = [
+  "kuchyne",
+  "predsine",
+  "detske",
+  "skrine",
+  "koupelny",
+  "loznice",
+  "obyvaci",
+  "recepce",
+  "satny",
+];
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== "POST") {

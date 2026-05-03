@@ -66,6 +66,17 @@ function parseKeyFromUrl(url: string): string | undefined {
   }
 }
 
+/** Čas z R2 klíče `galerie/1736123456789-soubor.jpg` — řazení a stabilní čísla (nejstarší = 1). */
+function extractUploadTimeFromKey(photo: GalleryPhoto, indexFallback: number): number {
+  const key = (photo.key?.trim() || parseKeyFromUrl(photo.url) || "").trim();
+  const m = key.match(/\/(\d{10,})-/);
+  if (m) {
+    const t = parseInt(m[1], 10);
+    if (!Number.isNaN(t)) return t;
+  }
+  return indexFallback;
+}
+
 function inferPhotoCode(source: string | undefined, galleryId: string): string | undefined {
   if (!source) return undefined;
   const pref = CODE_BY_GALLERY[galleryId];
@@ -115,6 +126,8 @@ function Home() {
   /** Výška bloku e-mail + telefon + tlačítko — panáčci mají max. tuto výšku (flex + img jinak roztahuje řádek). */
   const footerContactRef = useRef<HTMLDivElement>(null);
   const [footerBandPx, setFooterBandPx] = useState(0);
+  /** Pouze desktop: zvětšená fotka; zavře se kliknutím kamkoliv (bez přepínání mezi snímky). */
+  const [desktopLightboxUrl, setDesktopLightboxUrl] = useState<string | null>(null);
 
   const mobileNavStrip = useMemo(
     () =>
@@ -280,19 +293,36 @@ function Home() {
   };
 
   const currentPhotos = photos[activeSection] ?? [];
-  const visibleGalleryPhotos = useMemo(
-    () => currentPhotos.filter((photo) => !failedGalleryUrls.has(photo.url)),
-    [currentPhotos, failedGalleryUrls],
-  );
+  /** Nejnovější nahoře; `stableNum` = trvalé číslo (nejstarší v albu = 1). */
+  const galleryDisplayRows = useMemo(() => {
+    const rows = currentPhotos
+      .map((photo, originalIdx) => ({
+        photo,
+        ts: extractUploadTimeFromKey(photo, originalIdx),
+        originalIdx,
+      }))
+      .filter((row) => !failedGalleryUrls.has(row.photo.url));
+    if (rows.length === 0) return [];
+    const asc = [...rows].sort((a, b) => a.ts - b.ts || a.originalIdx - b.originalIdx);
+    const stableNumByUrl = new Map<string, number>();
+    asc.forEach((row, i) => {
+      stableNumByUrl.set(row.photo.url, Math.min(i + 1, 999));
+    });
+    const desc = [...rows].sort((a, b) => b.ts - a.ts || b.originalIdx - a.originalIdx);
+    return desc.map(({ photo }) => ({
+      photo,
+      stableNum: stableNumByUrl.get(photo.url) ?? 1,
+    }));
+  }, [currentPhotos, failedGalleryUrls]);
 
   const setPhotoCardRef = useCallback((url: string, el: HTMLDivElement | null) => {
     photoCardRefs.current[url] = el;
   }, []);
 
   useEffect(() => {
-    if (visibleGalleryPhotos.length === 0) return;
-    const cards = visibleGalleryPhotos
-      .map((photo) => photoCardRefs.current[photo.url])
+    if (galleryDisplayRows.length === 0) return;
+    const cards = galleryDisplayRows
+      .map(({ photo }) => photoCardRefs.current[photo.url])
       .filter((el): el is HTMLDivElement => !!el);
     if (cards.length === 0) return;
 
@@ -320,13 +350,13 @@ function Home() {
 
     cards.forEach((card) => observer.observe(card));
     return () => observer.disconnect();
-  }, [activeSection, visibleGalleryPhotos]);
+  }, [activeSection, galleryDisplayRows]);
 
   useLayoutEffect(() => {
-    if (visibleGalleryPhotos.length === 0) return;
+    if (galleryDisplayRows.length === 0) return;
     const rememberedUrl = lastViewedPhotoBySectionRef.current[activeSection];
     if (!rememberedUrl) return;
-    if (!visibleGalleryPhotos.some((photo) => photo.url === rememberedUrl)) return;
+    if (!galleryDisplayRows.some(({ photo }) => photo.url === rememberedUrl)) return;
 
     let cancelled = false;
     let tries = 0;
@@ -346,7 +376,32 @@ function Home() {
     return () => {
       cancelled = true;
     };
-  }, [activeSection, visibleGalleryPhotos]);
+  }, [activeSection, galleryDisplayRows]);
+
+  useEffect(() => {
+    setDesktopLightboxUrl(null);
+  }, [activeSection]);
+
+  useEffect(() => {
+    if (isMobile) {
+      setDesktopLightboxUrl(null);
+      return;
+    }
+    if (!desktopLightboxUrl) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setDesktopLightboxUrl(null);
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [desktopLightboxUrl, isMobile]);
 
   useLayoutEffect(() => {
     const el = footerContactRef.current;
@@ -508,16 +563,11 @@ function Home() {
             transition={{ duration: 0.3 }}
             className="w-full"
           >
-            {visibleGalleryPhotos.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-                {visibleGalleryPhotos.map((photo, visibleIndex) => {
-                  const orderIndex = currentPhotos.findIndex((p) => p.url === photo.url);
-                  const n = Math.min(
-                    orderIndex >= 0 ? orderIndex + 1 : visibleIndex + 1,
-                    999,
-                  );
+            {galleryDisplayRows.length > 0 ? (
+              <div className="grid w-full grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-2">
+                {galleryDisplayRows.map(({ photo, stableNum }) => {
                   const cat = CODE_BY_GALLERY[activeSection] ?? "XX";
-                  const photoLabel = `${cat}-${n}`;
+                  const photoLabel = `${cat}-${stableNum}`;
                   return (
                   <div
                     key={photo.url}
@@ -525,19 +575,40 @@ function Home() {
                     data-photo-url={photo.url}
                     className="flex flex-col gap-0 scroll-mt-28 md:scroll-mt-32"
                   >
-                    <div className="group relative aspect-square w-full overflow-hidden rounded-t-sm rounded-b-none bg-muted">
+                    <div
+                      className={`w-full bg-black leading-[0] ${!isMobile ? "cursor-zoom-in" : ""}`}
+                      role={!isMobile ? "button" : undefined}
+                      tabIndex={!isMobile ? 0 : undefined}
+                      aria-label={!isMobile ? "Zvětšit fotku" : undefined}
+                      onClick={
+                        !isMobile
+                          ? () => {
+                              setDesktopLightboxUrl(photo.url);
+                            }
+                          : undefined
+                      }
+                      onKeyDown={
+                        !isMobile
+                          ? (e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                setDesktopLightboxUrl(photo.url);
+                              }
+                            }
+                          : undefined
+                      }
+                    >
                       <img
                         src={photo.url}
                         alt=""
                         loading="lazy"
                         decoding="async"
                         onError={() => markGalleryPhotoFailed(photo.url)}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        className="mx-auto block h-auto max-h-[min(88vh,920px)] w-auto max-w-full align-top object-contain"
                       />
-                      <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-500" />
                     </div>
-                    <div className="flex justify-center md:justify-start -mt-px px-0">
-                      <span className="inline-flex min-w-[2.25rem] items-center justify-center rounded-b-sm rounded-t-none border border-t-0 border-white/25 bg-black/70 px-2 py-1 text-xs md:text-sm font-semibold tabular-nums tracking-wide text-white">
+                    <div className="mt-px flex w-full justify-center">
+                      <span className="inline-flex min-h-[1.75rem] min-w-[2.25rem] items-center justify-center rounded-b-sm border-b border-l border-r border-white border-t-0 bg-black px-2.5 py-1 text-xs font-semibold tabular-nums tracking-wide text-white md:text-sm">
                         {photoLabel}
                       </span>
                     </div>
@@ -554,7 +625,21 @@ function Home() {
         </AnimatePresence>
       </main>
 
-      <footer className="fixed bottom-0 left-0 right-0 z-40 w-full border-t border-white/15 bg-transparent px-2 py-1 md:px-6 md:py-1">
+      {!isMobile && desktopLightboxUrl && (
+        <div
+          className="fixed inset-0 z-[100] flex cursor-zoom-out items-center justify-center bg-black/90 p-4 md:p-8"
+          role="presentation"
+          onClick={() => setDesktopLightboxUrl(null)}
+        >
+          <img
+            src={desktopLightboxUrl}
+            alt=""
+            className="pointer-events-none max-h-[min(92vh,920px)] max-w-[min(96vw,1400px)] object-contain"
+          />
+        </div>
+      )}
+
+      <footer className="fixed bottom-0 left-0 right-0 z-40 w-full border-t border-white/15 bg-transparent px-2 py-1 md:bg-black md:px-6 md:py-2">
         <div className="mx-auto flex w-full max-w-4xl items-center justify-center gap-2 md:gap-3">
           <div
             className="flex min-h-0 shrink-0 items-center justify-center overflow-hidden rounded-md bg-black p-0.5 shadow-[0_2px_8px_rgba(0,0,0,0.4)] md:rounded-lg md:p-1 max-w-[min(30vw,7.5rem)] md:max-w-[8.5rem]"

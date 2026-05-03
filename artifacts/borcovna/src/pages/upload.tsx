@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 
+/** @sync allowlist na Cloudflare workeru `upload-photo` (viz KUCHARKA.md) — musí obsahovat všechna `id`. */
 const GALLERIES = [
   { id: "kuchyne", label: "Kuchyně", code: "KU" },
   { id: "predsine", label: "Předsíně", code: "PR" },
@@ -102,7 +103,7 @@ function photoFromApiItem(item: unknown): GalleryPhoto | null {
 const GET_PHOTOS_ENDPOINT = import.meta.env.VITE_GET_PHOTOS_ENDPOINT ?? "https://get-photos.jarvolf93.workers.dev/";
 const UPLOAD_PHOTO_ENDPOINT = import.meta.env.VITE_UPLOAD_PHOTO_ENDPOINT ?? "https://upload-photo.jarvolf93.workers.dev/";
 const DELETE_PHOTO_ENDPOINT = import.meta.env.VITE_DELETE_PHOTO_ENDPOINT ?? "https://delete-photo.jarvolf93.workers.dev/";
-const MAX_FILES_PER_UPLOAD = 20;
+const MAX_FILES_PER_UPLOAD = 25;
 const MAX_FILE_MB = 15;
 
 export default function Upload() {
@@ -131,6 +132,7 @@ export default function Upload() {
 
   useEffect(() => {
     fetchPhotos().catch((err) => {
+      setLoadedPhotos([]);
       const message = err instanceof Error ? err.message : "Nepodařilo se načíst fotky.";
       setPageMessage(message);
     });
@@ -288,7 +290,14 @@ export default function Upload() {
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center px-6 py-12 bg-background text-white">
-      <h1 className="text-2xl font-black tracking-widest uppercase mb-8">Nahrát fotky</h1>
+      <div className="mb-8 text-center">
+        <h1 className="text-2xl font-black tracking-widest uppercase">
+          Nahrát fotky (Max {MAX_FILES_PER_UPLOAD} ks)
+        </h1>
+        <p className="mt-2 text-sm text-white/70 tracking-wide">
+          Jednotlivý soubor max. {MAX_FILE_MB} MB (JPEG / obrázek; větší se před nahráním zmenší).
+        </p>
+      </div>
 
       <div className="w-full max-w-md flex flex-col gap-4">
         <div className="relative">
