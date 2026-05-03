@@ -261,9 +261,13 @@ function Home() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          jmeno: trimmedName,
+          telefon: trimmedPhone,
+          email: trimmedEmail,
+          dotaz: trimmedMessage,
+          // anglické aliasy pro případné starší/alternativní workery
           name: trimmedName,
           phone: trimmedPhone,
-          email: trimmedEmail,
           message: trimmedMessage,
         }),
       });
