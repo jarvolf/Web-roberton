@@ -35,3 +35,4 @@
 - [ ] Přidat jednoduchý anti-spam/rate limit u uploadu/formuláře
 
 Opravy: 1. formulář v desktopu je přilepen napravo, vystředit
+2. nezobrazené obrázky v galeriích - Předsíně, Dětské pokoje, Koupelny, 

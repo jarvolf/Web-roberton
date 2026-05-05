@@ -81,6 +81,11 @@ a:hover {
   color: hsl(0, 100%, 50%) !important;
 }
 
+/* Footer CTA: na červeném tlačítku musí být při hoveru text/ikona černé. */
+button[data-testid="button-contact-open"]:hover {
+  color: #000 !important;
+}
+
 [data-state="active"] {
   color: hsl(0, 100%, 50%) !important;
   border-bottom: 2px solid hsl(0, 100%, 50%) !important;
