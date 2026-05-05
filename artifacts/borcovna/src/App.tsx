@@ -52,8 +52,15 @@ const sections = [
 
 type FormData = { jmeno: string; telefon: string; email: string; dotaz: string };
 type FormStatus = "idle" | "sending" | "sent" | "error";
-const CONTACT_FORM_ENDPOINT = import.meta.env.VITE_CONTACT_ENDPOINT ?? "https://contact-form.jarvolf93.workers.dev/";
-const GET_PHOTOS_ENDPOINT = import.meta.env.VITE_GET_PHOTOS_ENDPOINT ?? "https://get-photos.jarvolf93.workers.dev/";
+/** Prázdný řetězec v Pages env by s `??` přepsal výchozí URL — fetch by šel na špatnou adresu. */
+const CONTACT_FORM_ENDPOINT =
+  (typeof import.meta.env.VITE_CONTACT_ENDPOINT === "string" && import.meta.env.VITE_CONTACT_ENDPOINT.trim() !== ""
+    ? import.meta.env.VITE_CONTACT_ENDPOINT.trim()
+    : "https://contact-form.jarvolf93.workers.dev/");
+const GET_PHOTOS_ENDPOINT =
+  (typeof import.meta.env.VITE_GET_PHOTOS_ENDPOINT === "string" && import.meta.env.VITE_GET_PHOTOS_ENDPOINT.trim() !== ""
+    ? import.meta.env.VITE_GET_PHOTOS_ENDPOINT.trim()
+    : "https://get-photos.jarvolf93.workers.dev/");
 
 type GalleryPhoto = { url: string; key?: string; code?: string };
 const CODE_BY_GALLERY = Object.fromEntries(sections.map((s) => [s.id, s.code])) as Record<string, string>;
@@ -319,6 +326,31 @@ function Home() {
     }));
   }, [currentPhotos, failedGalleryUrls]);
 
+  const desktopLightboxIndex = useMemo(() => {
+    if (!desktopLightboxUrl) return -1;
+    return galleryDisplayRows.findIndex(({ photo }) => photo.url === desktopLightboxUrl);
+  }, [desktopLightboxUrl, galleryDisplayRows]);
+
+  const openPrevDesktopLightboxPhoto = useCallback(() => {
+    if (galleryDisplayRows.length === 0) return;
+    if (desktopLightboxIndex < 0) {
+      setDesktopLightboxUrl(galleryDisplayRows[0]?.photo.url ?? null);
+      return;
+    }
+    const prevIndex = (desktopLightboxIndex - 1 + galleryDisplayRows.length) % galleryDisplayRows.length;
+    setDesktopLightboxUrl(galleryDisplayRows[prevIndex]?.photo.url ?? null);
+  }, [desktopLightboxIndex, galleryDisplayRows]);
+
+  const openNextDesktopLightboxPhoto = useCallback(() => {
+    if (galleryDisplayRows.length === 0) return;
+    if (desktopLightboxIndex < 0) {
+      setDesktopLightboxUrl(galleryDisplayRows[0]?.photo.url ?? null);
+      return;
+    }
+    const nextIndex = (desktopLightboxIndex + 1) % galleryDisplayRows.length;
+    setDesktopLightboxUrl(galleryDisplayRows[nextIndex]?.photo.url ?? null);
+  }, [desktopLightboxIndex, galleryDisplayRows]);
+
   const setPhotoCardRef = useCallback((url: string, el: HTMLDivElement | null) => {
     photoCardRefs.current[url] = el;
   }, []);
@@ -396,6 +428,16 @@ function Home() {
       if (e.key === "Escape") {
         e.preventDefault();
         setDesktopLightboxUrl(null);
+        return;
+      }
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        openPrevDesktopLightboxPhoto();
+        return;
+      }
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        openNextDesktopLightboxPhoto();
       }
     };
     document.addEventListener("keydown", onKeyDown);
@@ -405,7 +447,7 @@ function Home() {
       document.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = prevOverflow;
     };
-  }, [desktopLightboxUrl, isMobile]);
+  }, [desktopLightboxUrl, isMobile, openNextDesktopLightboxPhoto, openPrevDesktopLightboxPhoto]);
 
   useLayoutEffect(() => {
     const el = footerContactRef.current;
@@ -635,11 +677,33 @@ function Home() {
           role="presentation"
           onClick={() => setDesktopLightboxUrl(null)}
         >
+          <button
+            type="button"
+            aria-label="Předchozí fotka"
+            onClick={(e) => {
+              e.stopPropagation();
+              openPrevDesktopLightboxPhoto();
+            }}
+            className="absolute left-4 top-1/2 z-[101] flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-white/90 transition-colors hover:bg-black/65 hover:text-white"
+          >
+            <ChevronLeft className="h-8 w-8" strokeWidth={2.5} />
+          </button>
           <img
             src={desktopLightboxUrl}
             alt=""
             className="pointer-events-none max-h-[min(92vh,920px)] max-w-[min(96vw,1400px)] object-contain"
           />
+          <button
+            type="button"
+            aria-label="Další fotka"
+            onClick={(e) => {
+              e.stopPropagation();
+              openNextDesktopLightboxPhoto();
+            }}
+            className="absolute right-4 top-1/2 z-[101] flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-white/90 transition-colors hover:bg-black/65 hover:text-white"
+          >
+            <ChevronRight className="h-8 w-8" strokeWidth={2.5} />
+          </button>
         </div>
       )}
 

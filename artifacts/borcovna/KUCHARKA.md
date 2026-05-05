@@ -111,6 +111,15 @@ VITE_DELETE_PHOTO_ENDPOINT=https://…delete-photo…/
 
 V **kódu** jsou výchozí URL jako záloha, ale na produkci je lepší mít vše v env u **buildu** Pages (Environment variables), aby šlo endpointy měnit bez změny kódu.
 
+### `VITE_*` URL v `App.tsx` (kontakt + get-photos)
+
+U **`VITE_CONTACT_ENDPOINT`** a **`VITE_GET_PHOTOS_ENDPOINT`** platí v `App.tsx` toto:
+
+- Hodnota z env se použije **jen pokud je neprázdný řetězec po `trim()`**.
+- Kdyby v Cloudflare Pages byla u buildu nastavená **prázdná** proměnná (`""`), operátor `??` by výchozí URL **nepoužil** — ve výsledném JS by byl prázdný řetězec a `fetch` by mířil špatně (např. na origin webu). Proto je v kódu ošetření mimo čisté `??`.
+
+Ostatní endpointy fotek (`VITE_UPLOAD_*`, `VITE_DELETE_*`) řeší jiné soubory; u nich případně stejný princip doplníš při úpravách.
+
 ### Co kde musí být nastavené (mimo tento repozitář)
 
 | Worker / služba | Účel |
@@ -118,7 +127,7 @@ V **kódu** jsou výchozí URL jako záloha, ale na produkci je lepší mít vš
 | **get-photos** | GET `?gallery=kuchyne` → JSON se seznamem fotek (klíče + URL na CDN). |
 | **upload-photo** | POST JSON (heslo, galerie, jméno souboru, typ, base64) → uloží do R2. |
 | **delete-photo** | POST JSON (heslo, galerie, key) → smaže objekt v R2. |
-| **contact-form** | Prohlížeč pošle **POST** JSON (jméno, telefon, e-mail, zpráva). Worker zavolá **Resend API** (secret např. `RESEND_API_KEY`) a nechá doručit zprávu na **borcovna@roberton.cz** (příjemce nastavíš v kódu / env workeru — musí sedět s provozem schránky Borcovna). |
+| **contact-form** | Prohlížeč pošle **POST** `application/json`. V `App.tsx` se posílají **oba názvy polí** najednou: česky `jmeno`, `telefon`, `email`, `dotaz` a anglicky `name`, `phone`, `message` (stejné hodnoty) — kvůli kompatibilitě s workerem i s případnou Netlify funkcí `netlify/functions/contact.ts` v repu (ta čte jen české klíče). Worker zavolá **Resend API** (secret např. `RESEND_API_KEY`) a nechá doručit zprávu na **borcovna@roberton.cz** (příjemce nastavíš v kódu / env workeru — musí sedět s provozem schránky Borcovna). |
 
 Společné pro fotky (podle tvých poznámek):
 
@@ -149,11 +158,12 @@ Společné pro fotky (podle tvých poznámek):
 ### Kontaktní formulář („Napište nám“)
 
 1. Uživatel vyplní sheet na webu a klikne **Odeslat** — z prohlížeče **neodchází SMTP**, jen **HTTPS POST** s JSON tělem na adresu `VITE_CONTACT_ENDPOINT` (contact-form Worker).
-2. V `App.tsx` je navíc **honeypot** (skryté pole pro boty) a kontrola, že **telefon** má smysluplný počet číslic; to je jen na klientovi — důležitá validace patří i do workeru.
-3. **contact-form** Worker přijme JSON, zpracuje ho a přes **Resend** odešle e-mail na schránku **Borcovny** (cílová adresa je v workeru / jeho env — na webu v zápatí je zobrazená **borcovna@roberton.cz**, kam má dotaz fyzicky dojít).
-4. Worker vrátí JSON (úspěch / chyba); stránka zobrazí potvrzení nebo hlášku o chybě.
+2. JSON obsahuje pole **`jmeno`, `telefon`, `email`, `dotaz`** a zároveň **`name`, `phone`, `message`** (stejné hodnoty), aby fungoval worker bez ohledu na to, kterou sadu klíčů v těle očekává.
+3. V `App.tsx` je navíc **honeypot** (skryté pole pro boty) a kontrola, že **telefon** má smysluplný počet číslic; to je jen na klientovi — důležitá validace patří i do workeru. Pokud honeypot vyplní bot (nebo výjimečně prohlížeč), stránka ukáže úspěch **bez** odeslání na server.
+4. **contact-form** Worker přijme JSON, zpracuje ho a přes **Resend** odešle e-mail na schránku **Borcovny** (cílová adresa je v workeru / jeho env — na webu v zápatí je zobrazená **borcovna@roberton.cz**, kam má dotaz fyzicky dojít).
+5. Worker vrátí JSON (úspěch / chyba); stránka zobrazí potvrzení nebo hlášku o chybě.
 
-**Shrnutí:** formulář = jen rozhraní; **odeslání pošty = Worker + Resend → borcovna@roberton.cz** (ne přímé „odeslání z formuláře“ bez backendu).
+**Shrnutí:** formulář = jen rozhraní; **odeslání pošty = Worker + Resend → borcovna@roberton.cz** (ne přímé „odeslání z formuláře“ bez backendu). **Doručenka** `borcovna@` je na **Wedosu** (MX domény), ne v Cloudflare.
 
 ### Nahrání fotky (`/foto`)
 
@@ -196,7 +206,8 @@ Proměnné `VITE_*` pro produkční build nastav v **Cloudflare Pages → projek
 
 - [ ] `/` — galerie, zápatí, tlačítko kontaktu (mobil i desktop).
 - [ ] `/foto` — nahrání, mazání, špatné heslo hlásí chybu.
-- [ ] Formulář odešle zprávu (Worker + Resend) a e-mail dorazí na **borcovna@roberton.cz**.
+- [ ] Formulář odešle zprávu (Worker + Resend) a e-mail dorazí na **borcovna@roberton.cz** (v DevTools → Network ověř POST na worker URL a stav odpovědi).
+- [ ] Zkus z jiné schránky poslat běžný mail na **borcovna@roberton.cz** — když ani ten nedorazí, problém není ve formuláři, ale v **MX / Wedosu** (viz §11).
 - [ ] V konzoli prohlížeče žádný CORS error.
 - [ ] Po deployi refresh na `https://roberton.cz/foto` funguje (díky `_redirects`).
 
@@ -208,7 +219,14 @@ Proměnné `VITE_*` pro produkční build nastav v **Cloudflare Pages → projek
 2. **404 na `/foto`** po deployi — chybí nebo je špatně `_redirects` v `public/` (musí být ve výstupu `dist/public`).
 3. **Prázdná galerie** — špatný `VITE_GET_PHOTOS_ENDPOINT`, nebo v R2 pod jiným prefixem, nebo worker nevidí bucket.
 4. **Build v CI padá** — Node/pnpm verze jako ve workflow; lokálně `pnpm install` a znovu build.
-5. **Formulář „projde“, ale mail nepřijde** — Resend dashboard (log chyb), platnost API klíče, ověřená doména odesílatele, a že worker opravdu posílá na **borcovna@roberton.cz**.
+5. **Formulář v UI úspěch, ale v schránce nic** — postupuj od **prohlížeče ven**, ať nehádáš naslepo:
+   - **Network** (F12): je požadavek na správnou URL workeru? Stav **200** a tělo např. `{"ok":true}`? Při chybě čti tělo odpovědi.
+   - **Resend** (dashboard): je zpráva v logu? Stav **Delivered** znamená, že Resend předal zprávu na **mailový server určený MX záznamy** pro `roberton.cz` (typicky Wedos). To už **není chyba Cloudflare Workeru ani front-endu**.
+   - **Cloudflare → DNS → MX** pro **jméno `roberton.cz`** (root / `@`): měly by být záznamy na **`wes1-mx1.wedos.net`**, **`wes1-mx2.wedos.net`**, případně backup Wedosu. Záznamy typu MX jen u subdomény **`send`** (např. Amazon SES) se týkají **odesílání z `send.roberton.cz`**, ne příjmu na **`něco@roberton.cz`**.
+   - **Wedos administrace domény** může hlásit, že doména **nepoužívá wedosovské DNS** — to je v pořádku, když nameservery jsou u **Cloudflare**; důležité je, že **MX pro příjem** jsou v **Cloudflare DNS** správně nastavené na Wedos (viz výše).
+   - **Wedos webhosting → schránka `borcovna`**: bez přesměrování, oprávnění příjem zapnuté. Ve **webmailu** zkontroluj i složku **Spam** (u schránky může být zapnutá **samostatná spam složka**; přes **POP3** ji některé klienty nevidí).
+   - Když **Resend ukazuje Delivered** a zároveň **běžný mail z osobní schránky na borcovna@ také nedorazí** ani do Spam, je na řadě **Wedos podpora** s časem odeslání a případně **Message-ID** z Resend — ať dohledají SMTP log na jejich MX.
+6. **Resend API / worker** — platnost API klíče, ověřená doména odesílatele v Resend, v kódu workeru správná adresa **`to`** a že při chybě Resend worker nevrací falešné `ok: true`.
 
 ---
 
